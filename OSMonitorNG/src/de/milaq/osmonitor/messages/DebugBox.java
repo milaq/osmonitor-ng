@@ -302,6 +302,16 @@ public class DebugBox extends Activity {
     }
     
     @Override
+    protected void onPrepareDialog (int id, Dialog dialog){
+    	if (id==2){
+    		((EditText)((AlertDialog)dialog).findViewById(200)).setText(LoadTagFilter());
+    		((Spinner)((AlertDialog)dialog).findViewById(100)).setAdapter(LoadLevelFilterValues());
+    		((Spinner)((AlertDialog)dialog).findViewById(100)).setSelection(LoadLevelFilterSetting());
+    	}
+    }
+    
+    
+    @Override
     protected Dialog onCreateDialog(int id) 
     {
     	switch (id)
@@ -359,13 +369,9 @@ public class DebugBox extends Activity {
     		TextView LogLevelDesc = new TextView(this);
     		LogLevelDesc.setText(R.string.filterlevel_text);
     		EditText FilterTag = new EditText(this);
+    		FilterTag.setId(200);
     		Spinner LogLevel = new Spinner(this);
     		LogLevel.setId(100);
-    		ArrayAdapter<?> LevelAdapter;
-    		if (Mode.equals("Logcat")) LevelAdapter = ArrayAdapter.createFromResource(this, R.array.logcat_level_list, android.R.layout.simple_spinner_item);
-    		else LevelAdapter = ArrayAdapter.createFromResource(this, R.array.dmesg_level_list, android.R.layout.simple_spinner_item);
-    		LevelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    		LogLevel.setAdapter(LevelAdapter);
     		FilterLayout.addView(LogLevel, 0);
     		FilterLayout.addView(LogLevelDesc, 0);
     		FilterLayout.addView(FilterTag, 0);
@@ -375,17 +381,16 @@ public class DebugBox extends Activity {
             .setView(FilterLayout)
             .setPositiveButton(R.string.btnok_title, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
-                	long Level = ((Spinner)((AlertDialog)dialog).findViewById(100)).getSelectedItemId()+1;
-                	if(Level == 1) Level = 0;
-    				JNILibrary.SetLogcatLevel((int) Level);
-    				ApplyTagFilter(((EditText)((AlertDialog)dialog).findViewById(200)).getText().toString());    				
+                	ApplyLevelFilter(((Spinner)((AlertDialog)dialog).findViewById(100)).getSelectedItemId());
+    				ApplyTagFilter(((EditText)((AlertDialog)dialog).findViewById(200)).getText().toString());
+    				onResume();
                 }
             })
             .setNegativeButton(R.string.btncancel_title, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 }
             })
-            .create();    		
+            .create();
     	}
     	
     	return null;
@@ -399,11 +404,47 @@ public class DebugBox extends Activity {
     	return s;
     }
     
+    private ArrayAdapter<?> LoadLevelFilterValues(){
+    	ArrayAdapter<?> LevelAdapter;
+    	if (Mode.equals("Logcat")) LevelAdapter = ArrayAdapter.createFromResource(this, R.array.logcat_level_list, android.R.layout.simple_spinner_item);
+		else LevelAdapter = ArrayAdapter.createFromResource(this, R.array.dmesg_level_list, android.R.layout.simple_spinner_item);
+    	LevelAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    	return LevelAdapter;
+    }
+    
+    private int LoadLevelFilterSetting(){
+    	int i;
+    	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+    	if(Mode.equals("dmesg")){
+    		i = Integer.parseInt(settings.getString(Preferences.PREF_DMESGFILTERLV, "8"));
+    		if (i==8) i=0;
+    		else i++;
+    	}
+    	else{
+    		i = Integer.parseInt(settings.getString(Preferences.PREF_LOGCATFILTERLV, "0"));
+    		if (i>0) i--;
+    	}
+    	return i;
+    }
+    
     private void ApplyTagFilter(String s){
     	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		if(Mode.equals("dmesg")) settings.edit().putString(Preferences.PREF_DMESGFILTERSTR, s).commit();
 		else settings.edit().putString(Preferences.PREF_LOGCATFILTERSTR, s).commit();
-		onResume();
+    }
+    
+    private void ApplyLevelFilter(long l){
+    	int i=(int)l;
+    	SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
+		if(Mode.equals("dmesg")){
+			if (i==0) i=8;
+			else i--;
+			settings.edit().putString(Preferences.PREF_DMESGFILTERLV, String.valueOf(i)).commit();
+		}
+		else{
+			if (i>0) i++;			
+			settings.edit().putString(Preferences.PREF_LOGCATFILTERLV, String.valueOf(i)).commit();
+		}
     }
     
     private void EnableFilter (boolean b){
