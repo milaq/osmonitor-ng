@@ -92,7 +92,7 @@ public class DebugBox extends Activity {
  			    	if(Mode.equals("dmesg"))
  				    	MsgCountText.setText("dmesg #"+JNILibrary.GetDebugMessageCounts());
  				    else
- 				    	MsgCountText.setText("Logcat #"+JNILibrary.GetLogcatCounts());
+ 				    	MsgCountText.setText("logcat #"+JNILibrary.GetLogcatCounts());
  					
  					if(EmptyMsg != null)
  						EmptyMsg.setText("");
