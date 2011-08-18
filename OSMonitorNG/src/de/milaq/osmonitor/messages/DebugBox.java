@@ -170,17 +170,18 @@ public class DebugBox extends Activity {
     {
      	super.onCreateOptionsMenu(optionMenu);
      	
-     	optionMenu.add(0, 6, 0, getResources().getString(R.string.switchlogs_text));
+     	if(targetPID == 0)
+     		optionMenu.add(0, 6, 0, getResources().getString(R.string.switchlogs_text));
      	
-     	optionMenu.add(0, 3, 0, getResources().getString(R.string.filter_text));
+     	if(targetPID == 0)
+     		optionMenu.add(0, 3, 0, getResources().getString(R.string.filter_text));
      	
      	optionMenu.add(0, 2, 0, getResources().getString(R.string.logexport_title));
      	
      	if(targetPID == 0)
      		optionMenu.add(0, 1, 0, getResources().getString(R.string.options_text));
 
-     	if(targetPID == 0)
-           	optionMenu.add(0, 4, 0, getResources().getString(R.string.aboutoption_text));
+        optionMenu.add(0, 4, 0, getResources().getString(R.string.aboutoption_text));
      	
        	optionMenu.add(0, 5, 0, getResources().getString(R.string.forceexit_text));
     	return true;
@@ -684,6 +685,8 @@ public class DebugBox extends Activity {
     	{
     		setTarget();
 			JNILibrary.doTaskStart(JNILibrary.doTaskLogcat);
+			CheckBox Filter = (CheckBox) findViewById(R.id.debugmsgfilter);
+			Filter.setEnabled(false);
     	}
     	
 		FirstView = true;
