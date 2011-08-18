@@ -383,7 +383,7 @@ public class DebugBox extends Activity {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 	ApplyLevelFilter(((Spinner)((AlertDialog)dialog).findViewById(100)).getSelectedItemId());
     				ApplyTagFilter(((EditText)((AlertDialog)dialog).findViewById(200)).getText().toString());
-    				onResume();
+    				if (FilterIt) onResume();
                 }
             })
             .setNegativeButton(R.string.btncancel_title, new DialogInterface.OnClickListener() {
