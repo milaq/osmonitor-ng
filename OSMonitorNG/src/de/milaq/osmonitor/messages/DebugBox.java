@@ -319,7 +319,7 @@ public class DebugBox extends Activity {
     	{
     	case 0:
         	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.monitor)
+			   .setIcon(R.drawable.appicon)
 			   .setTitle(R.string.app_name)
 			   .setMessage(R.string.about_text)
 			   .setPositiveButton(R.string.aboutbtn_text,
@@ -474,7 +474,7 @@ public class DebugBox extends Activity {
         	{
         		if (!LogFile.toString().equals(baseDir+Mode.toLowerCase()+"-mailexport.log")){
         		new AlertDialog.Builder(this)
-    		   		.setIcon(R.drawable.monitor)
+    		   		.setIcon(R.drawable.appicon)
     		   		.setTitle(R.string.app_name)
     		   		.setMessage(R.string.exportexist_title)
     		   		.setPositiveButton(R.string.btnok_title,
@@ -539,7 +539,7 @@ public class DebugBox extends Activity {
 
     	} catch (Exception e) {
     		new AlertDialog.Builder(this)
-	   		.setIcon(R.drawable.monitor)
+	   		.setIcon(R.drawable.appicon)
 	   		.setTitle(R.string.app_name)
 	   		.setMessage(e.getMessage())
 	   		.setPositiveButton(R.string.btnok_title,
@@ -553,7 +553,7 @@ public class DebugBox extends Activity {
     	
     	if (!FileName.equals(Mode.toLowerCase()+"-mailexport.log")){
   		new AlertDialog.Builder(this)
-   		.setIcon(R.drawable.monitor)
+   		.setIcon(R.drawable.appicon)
    		.setTitle(R.string.app_name)
    		.setMessage("File sucessfully exported "+Mode.toLowerCase()+" to:\n"+baseDir+FileName)
    		.setPositiveButton(R.string.btnok_title,

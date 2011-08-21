@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
-<string name="app_name">OSMonitorNG</string>
+<string name="app_name">OS Monitor</string>
+<string name="app_name_long">OS Monitor NG</string>
 <string name="app_title">Android OS Monitor NG 1.2</string>
 <string name="bar_title">Android OS Monitor NG</string>
 <string name="notify_text">Running in background</string>
@@ -112,7 +113,7 @@
 <string name="multikill_text">Kill</string>
 <string name="multireset_text">Reset</string>
 <string name="freeze_text">Freeze</string>
-<string name="about_text">Version: 1.2-ng\n\nby milaq\n\n\nOriginal OSMonitor by eolwral@gmail.com\n\nOriginal icon by\n Oxygen ©2005 Vignoni David.\n\nWhois API:\n http://en.utrace.de\n\nSpecial thanks to Borja Berastegui, Florence Delville, Loïc Monthorin for their help and suggestion.\n\n</string>
+<string name="about_text">Version: 1.2-ng\n\nby milaq\n\n\nOriginal OS Monitor by eolwral@gmail.com\n\nOriginal icon by\n Oxygen ©2005 Vignoni David.\n\nWhois API:\n http://en.utrace.de\n\nSpecial thanks to Borja Berastegui, Florence Delville, Loïc Monthorin for their help and suggestion.\n\n</string>
 <string name="aboutbtn_text">Close</string>
 <string name="switchlogs_text">Switch logtype</string>
 </resources>

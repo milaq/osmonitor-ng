@@ -314,7 +314,7 @@ public class NetworkList extends MapActivity
     	{
     	case 0:
         	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.monitor)
+			   .setIcon(R.drawable.appicon)
 			   .setTitle(R.string.app_name)
 			   .setMessage(R.string.about_text)
 			   .setPositiveButton(R.string.aboutbtn_text,
@@ -409,7 +409,7 @@ public class NetworkList extends MapActivity
         	if (LogFile.exists())
         	{
         		new AlertDialog.Builder(this)
-    		   		.setIcon(R.drawable.monitor)
+    		   		.setIcon(R.drawable.appicon)
     		   		.setTitle(R.string.app_name)
     		   		.setMessage(R.string.exportexist_title)
     		   		.setPositiveButton(R.string.btnok_title,
@@ -456,7 +456,7 @@ public class NetworkList extends MapActivity
 
     	} catch (Exception e) {
     		new AlertDialog.Builder(this)
-	   		.setIcon(R.drawable.monitor)
+	   		.setIcon(R.drawable.appicon)
 	   		.setTitle(R.string.app_name)
 	   		.setMessage(e.getMessage())
 	   		.setPositiveButton(R.string.btnok_title,
@@ -469,7 +469,7 @@ public class NetworkList extends MapActivity
     	}
     	
   		new AlertDialog.Builder(this)
-   		.setIcon(R.drawable.monitor)
+   		.setIcon(R.drawable.appicon)
    		.setTitle(R.string.app_name)
    		.setMessage(R.string.exportdone_title)
    		.setPositiveButton(R.string.btnok_title,

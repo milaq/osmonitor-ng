@@ -3,7 +3,7 @@
       package="de.milaq.osmonitor"
       android:installLocation="auto" android:versionCode="19" android:versionName="1.2-ng">
     <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="8"/>
-    <application android:label="@string/app_name" android:icon="@drawable/monitor">
+    <application android:label="@string/app_name_long" android:icon="@drawable/appicon">
     	<activity android:name=".OSMonitor"
                   android:label="@string/app_name" android:configChanges="keyboardHidden">
             <intent-filter>

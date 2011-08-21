@@ -103,7 +103,7 @@ public class InterfaceList extends Activity
     	{
     	case 0:
         	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.monitor)
+			   .setIcon(R.drawable.appicon)
 			   .setTitle(R.string.app_name)
 			   .setMessage(R.string.about_text)
 			   .setPositiveButton(R.string.aboutbtn_text,
