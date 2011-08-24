@@ -91,6 +91,8 @@ public class NetworkList extends MapActivity
     private String WhoisMsg = null;
     private double Longtiude = 0;
     private double Latitude = 0;
+    
+    String baseDir = "/sdcard/OSMonitorNG/";
 
 	private boolean UseWhois = true;
 	private boolean IP6to4 = true;
@@ -402,9 +404,13 @@ public class NetworkList extends MapActivity
     {
     	if(FileName.trim().equals(""))
     		return;
-    	
+    	   	
     	try {
-        	File LogFile = new File("/sdcard/" + FileName);
+    		
+    		File baseDirFile = new File(baseDir);
+        	if (!baseDirFile.exists()) baseDirFile.mkdir();
+        	
+        	File LogFile = new File(baseDir + FileName);
     		
         	if (LogFile.exists())
         	{
@@ -468,10 +474,10 @@ public class NetworkList extends MapActivity
     		return;
     	}
     	
-  		new AlertDialog.Builder(this)
+		new AlertDialog.Builder(this)
    		.setIcon(R.drawable.appicon)
    		.setTitle(R.string.app_name)
-   		.setMessage(R.string.exportdone_title)
+   		.setMessage("Connectionlist successfully exported to:\n"+baseDir+FileName)
    		.setPositiveButton(R.string.btnok_title,
    				new DialogInterface.OnClickListener() {
    			public void onClick(DialogInterface dialog, int whichButton) { } })

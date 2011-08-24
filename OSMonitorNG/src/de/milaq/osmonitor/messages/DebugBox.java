@@ -555,7 +555,7 @@ public class DebugBox extends Activity {
   		new AlertDialog.Builder(this)
    		.setIcon(R.drawable.appicon)
    		.setTitle(R.string.app_name)
-   		.setMessage("File sucessfully exported "+Mode.toLowerCase()+" to:\n"+baseDir+FileName)
+   		.setMessage(Mode.toLowerCase()+" successfully exported to:\n"+baseDir+FileName)
    		.setPositiveButton(R.string.btnok_title,
    				new DialogInterface.OnClickListener() {
    			public void onClick(DialogInterface dialog, int whichButton) { } })

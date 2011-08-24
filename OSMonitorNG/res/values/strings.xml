@@ -103,7 +103,6 @@
 <string name="logexport_title">Export</string>
 <string name="exportfile_title">Choose a filename</string>
 <string name="exportexist_title">File already exist! Please choose another filename</string>
-<string name="exportdone_title">Export OK!</string>
 <string name="btnok_title">OK</string>
 <string name="btncancel_title">Cancel</string>
 <string name="aboutoption_text">About</string>
