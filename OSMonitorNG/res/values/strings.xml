@@ -27,8 +27,8 @@
 <string name="longclicktitle_text">Long click behavior</string>
 <string name="shortclicktitle_text">Short click behavior</string>
 <string name="clicktitlesum_text">Customize the click behavior</string>
-<string name="sortway_text">Descending order</string>
-<string name="sortwaysum_text">Please select if you want to sort in descending instead of ascending order</string>
+<string name="sortway_text">Reverse sort order</string>
+<string name="sortwaysum_text">Please select if you want to sort the list in ascending instead of descending order</string>
 <string name="slowadapter_text">Enable slow adapter</string>
 <string name="showsystem_text">Hide system processes</string>
 <string name="showsystemsum_text">Hide any process that contains "/system/" or UID equal to 0 (root)</string>

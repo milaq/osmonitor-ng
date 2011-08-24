@@ -391,9 +391,9 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	JNILibrary.SetProcessFilter(0);
         
         if(SortIn)
-        	JNILibrary.SetProcessOrder(0);
-        else 
         	JNILibrary.SetProcessOrder(1);
+        else 
+        	JNILibrary.SetProcessOrder(0);
         
         // change display
         TextView OrderType = (TextView) findViewById(R.id.OrderType);
