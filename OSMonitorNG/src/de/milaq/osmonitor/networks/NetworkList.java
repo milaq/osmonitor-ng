@@ -229,7 +229,7 @@ public class NetworkList extends MapActivity
         // Use a custom layout file
         setContentView(R.layout.networklayout);
 
-		GeoIPMap = new MapView(this, "0N4HYg91PN1-cGgp3exBmvC1AdzeiGYzp7C3V7g");
+		GeoIPMap = new MapView(this, "0yvV3Z84VW85mXP4JRFpFSSx_BMsSmW1PwdXqcw");
 		GeoIPMap.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, 180));
 		GeoIPControl = GeoIPMap.getController();
 		GeoIPControl.setZoom(8);

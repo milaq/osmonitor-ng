@@ -2,7 +2,7 @@
 <resources>
 <string name="app_name">OS Monitor</string>
 <string name="app_name_long">OS Monitor NG</string>
-<string name="app_title">Android OS Monitor NG 1.2</string>
+<string name="app_title">Android OS Monitor NG 1.3</string>
 <string name="bar_title">Android OS Monitor NG</string>
 <string name="notify_text">Running in background</string>
 <string name="process_tab">Processes</string>
@@ -28,12 +28,12 @@
 <string name="shortclicktitle_text">Short click behavior</string>
 <string name="clicktitlesum_text">Customize the click behavior</string>
 <string name="sortway_text">Reverse sort order</string>
-<string name="sortwaysum_text">Please select if you want to sort the list in ascending instead of descending order</string>
+<string name="sortwaysum_text">Sort the list in ascending instead of descending order</string>
 <string name="slowadapter_text">Enable slow adapter</string>
 <string name="showsystem_text">Hide system processes</string>
 <string name="showsystemsum_text">Hide any process that contains "/system/" or UID equal to 0 (root)</string>
-<string name="rooted_text">Enable root</string>
-<string name="rootedsum_text">Support for killing system processes and setting CPU frequency</string>
+<string name="rooted_text">Root mode</string>
+<string name="rootedsum_text">Support for killing system processes and setting CPU frequency (needs root permissions)</string>
 <string name="interface_text">Interface</string>
 <string name="ip_text">IPv4</string>
 <string name="ip6_text">IPv6</string>
@@ -113,7 +113,7 @@
 <string name="multikill_text">Kill</string>
 <string name="multireset_text">Reset</string>
 <string name="freeze_text">Freeze</string>
-<string name="about_text">Version: 1.2-ng\n\nby milaq\n\n\nOriginal OS Monitor by eolwral@gmail.com\n\nOriginal icon by\n Oxygen ©2005 Vignoni David.\n\nWhois API:\n http://en.utrace.de\n\nSpecial thanks to Borja Berastegui, Florence Delville, Loïc Monthorin for their help and suggestion.\n\n</string>
+<string name="about_text">Version: 1.3-ng\n\nby milaq\n\n\nOriginal OS Monitor by eolwral@gmail.com\n\nWhois API:\n http://en.utrace.de\n\n</string>
 <string name="aboutbtn_text">Close</string>
 <string name="switchlogs_text">Switch logtype</string>
 </resources>
