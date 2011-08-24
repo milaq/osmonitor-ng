@@ -66,13 +66,13 @@
 							android:defaultValue="false">
 		</CheckBoxPreference>
 	
-		<ListPreference android:entries="@array/algorithm_list" 
+		<!-- <ListPreference android:entries="@array/algorithm_list" 
 						android:title="@string/algorithm_text" 
 						android:entryValues="@array/algorithm_value" 
 						android:dialogTitle="@string/algorithm_text"
 						android:key="SortAlgorithm_Preference" 
 						android:defaultValue="1">
-		</ListPreference>
+		</ListPreference> -->
 	
 	
 		<ListPreference android:entries="@array/entries_list_sort" 
