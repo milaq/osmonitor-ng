@@ -19,6 +19,7 @@ package de.milaq.osmonitor.networks;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.InputStream;
+import java.lang.ref.WeakReference;
 import java.net.InetAddress;
 import java.net.URL;
 import java.util.HashMap;
@@ -37,7 +38,6 @@ import com.google.android.maps.MapView;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.ProgressDialog;
-import android.app.TabActivity;
 import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -50,16 +50,13 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.preference.PreferenceManager;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.GestureDetector.OnGestureListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.CheckBox;
@@ -78,41 +75,31 @@ import de.milaq.osmonitor.preferences.Preferences;
 
 public class NetworkList extends MapActivity
 {
-	private static NetworkList Self = null;
-	private static NetworkListAdapter UpdateInterface = null;
-	private static JNIInterface JNILibrary = JNIInterface.getInstance();
-	private static TextView EmptyMsg = null;
-	private static PackageManager AppInfo = null;
-
-	private Context ProcContext = null;
+	private JNIInterface JNILibrary = JNIInterface.getInstance();
+	private NetworkListAdapter UpdateInterface = null;
+    private NetworkInfoQuery NetworkInfo = null;
+	
+	private TextView EmptyMsg = null;
+	
 	private ProgressDialog ProcDialog = null;
     private EventHandler ProcHandler = null;
     private QueryWhois ProcThread = null;
-    private String WhoisMsg = null;
-    private double Longtiude = 0;
-    private double Latitude = 0;
-    
-    String baseDir = "/sdcard/OSMonitorNG/";
 
 	private boolean UseWhois = true;
 	private boolean IP6to4 = true;
 	private boolean RDNS = false;
 	
-	private AlertDialog.Builder WhoisAlert = null;
-	private FrameLayout MapBody = null;
-    private ListView InternalList = null;
+	private WeakReference<FrameLayout> MapBodyRef = null;
 	private MapView GeoIPMap = null;
-    private MapController GeoIPControl = null;
-    
-    private NetworkInfoQuery NetworkInfo = null;
     
 	private Runnable runnable = new Runnable() {
 		public void run() {
 	        
 			if(JNILibrary.doDataLoad() == 1)
 			{
-				Self.onRefresh();
-
+		    	JNILibrary.doDataSwap();
+		    	UpdateInterface.notifyDataSetChanged();
+		    	
 				if(EmptyMsg != null)
 					EmptyMsg.setText("");
 			}
@@ -127,7 +114,12 @@ public class NetworkList extends MapActivity
     {
         public void handleMessage(Message msg) 
         {
-        	showWhois(WhoisMsg, Longtiude, Latitude);
+        	if(msg.obj != null)
+        	{
+        		CacheQuery WhoisQuery = (CacheQuery) msg.obj;
+        		showWhois(WhoisQuery.Msg, WhoisQuery.Longtiude, WhoisQuery.Latitude);
+        	}
+        	
         	if(ProcDialog != null)
         	{
             	ProcDialog.dismiss();
@@ -156,15 +148,15 @@ public class NetworkList extends MapActivity
 				if(!ForceStop)
 				{
 					CacheQuery WhoisQuery = CacheWhois.get(QueryIP);
-					WhoisMsg = WhoisQuery.Msg;
-					Longtiude = WhoisQuery.Longtiude;
-					Latitude = WhoisQuery.Latitude;
-					ProcHandler.sendEmptyMessage(0);
+					Message QueryResult = new Message();
+					QueryResult.obj = WhoisQuery;
+					ProcHandler.sendMessage(QueryResult);
 				}
 				return;
 			}
 			
 			StringBuilder whoisInfo = new StringBuilder();
+	        CacheQuery WhoisQuery = new CacheQuery();
 			try {
 				/* Create a URL we want to load some xml-data from. */
 	            URL url = new URL("http://xml.utrace.de/?query="+QueryIP);
@@ -192,10 +184,7 @@ public class NetworkList extends MapActivity
 	            /* Set the result to be displayed in our GUI. */
 	            whoisInfo.append(parsedDataSet.toString());
 
-	            Longtiude = parsedDataSet.getMapLongtiude();
-	            Latitude = parsedDataSet.getMapnLatitude();
-            
-		        WhoisMsg = whoisInfo.toString();
+	            String WhoisMsg = whoisInfo.toString();
 
 		        try
 		        {
@@ -203,21 +192,21 @@ public class NetworkList extends MapActivity
 		        			   "\n" + WhoisMsg;
 				} catch (Exception e) {}
 
-		        CacheQuery WhoisQuery = new CacheQuery();
 				WhoisQuery.Msg = WhoisMsg;
-				WhoisQuery.Longtiude = Longtiude;
-				WhoisQuery.Latitude = Latitude;
+				WhoisQuery.Longtiude = parsedDataSet.getMapLongtiude();
+				WhoisQuery.Latitude = parsedDataSet.getMapnLatitude();
 		        CacheWhois.put(QueryIP, WhoisQuery);
 	        } 
 			catch (Exception e) 
 	        {
-				Longtiude = 0;
-				Latitude = 0;
-				WhoisMsg = "Query failed!";
+				WhoisQuery.Msg = "Query failed!";
 	        }  
 			
-			if(!ForceStop)
-				ProcHandler.sendEmptyMessage(0);
+			if(!ForceStop) {
+				Message QueryResult = new Message();
+				QueryResult.obj = WhoisQuery;
+				ProcHandler.sendMessage(QueryResult);
+			}
 
 			return;
 		}
@@ -231,18 +220,13 @@ public class NetworkList extends MapActivity
         // Use a custom layout file
         setContentView(R.layout.networklayout);
 
-		GeoIPMap = new MapView(this, "0yvV3Z84VW85mXP4JRFpFSSx_BMsSmW1PwdXqcw");
+		GeoIPMap = new MapView(this, "0N4HYg91PN1-cGgp3exBmvC1AdzeiGYzp7C3V7g");
+		//GeoIPMap = new MapView(this, "0N4HYg91PN19P2R67mtD2NGBl3ce5DxqXlmH6TA");
 		GeoIPMap.setLayoutParams(new LayoutParams(LayoutParams.WRAP_CONTENT, 180));
-		GeoIPControl = GeoIPMap.getController();
-		GeoIPControl.setZoom(8);
-		
-        ProcContext = this;
-    	ProcHandler = new EventHandler();
-    	
-    	AppInfo = this.getPackageManager();
+
+		ProcHandler = new EventHandler();
         
-    	Self = this;
-    	InternalList = (ListView) findViewById(R.id.networklist);
+		ListView InternalList = (ListView) findViewById(R.id.networklist);
         InternalList.setEmptyView(findViewById(R.id.empty));
         InternalList.setAdapter(new NetworkListAdapter(this));
         InternalList.setOnItemClickListener(InternalListListener);
@@ -253,19 +237,13 @@ public class NetworkList extends MapActivity
         NetworkInfo = NetworkInfoQuery.getInstance(); 
     }
     
-    public void onRefresh()
-    {
-    	JNILibrary.doDataSwap();
-    	UpdateInterface.notifyDataSetChanged();
-    }
-    
     public boolean onCreateOptionsMenu(Menu optionMenu) 
     {
      	super.onCreateOptionsMenu(optionMenu);
-     	optionMenu.add(0, 1, 0, getResources().getString(R.string.options_text));
-     	optionMenu.add(0, 2, 0, getResources().getString(R.string.logexport_title));
-       	optionMenu.add(0, 4, 0, getResources().getString(R.string.aboutoption_text));
-       	optionMenu.add(0, 5, 0, getResources().getString(R.string.forceexit_text));
+     	optionMenu.add(0, 1, 0, getResources().getString(R.string.menu_options));
+     	optionMenu.add(0, 2, 0, getResources().getString(R.string.menu_logexport));
+       	optionMenu.add(0, 4, 0, getResources().getString(R.string.menu_help));
+       	optionMenu.add(0, 5, 0, getResources().getString(R.string.menu_forceexit));
         
     	return true;
     }
@@ -273,7 +251,7 @@ public class NetworkList extends MapActivity
 	
 
 	private void restorePrefs()
-    {
+    { 
 		// load settings
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 		
@@ -315,14 +293,21 @@ public class NetworkList extends MapActivity
     	switch (id)
     	{
     	case 0:
-        	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.appicon)
-			   .setTitle(R.string.app_name)
-			   .setMessage(R.string.about_text)
-			   .setPositiveButton(R.string.aboutbtn_text,
+    		AlertDialog.Builder HelpWindows = new AlertDialog.Builder(this);
+    		HelpWindows.setTitle(R.string.app_name);
+			HelpWindows.setMessage(R.string.help_info);
+			HelpWindows.setPositiveButton(R.string.button_close,
 			   new DialogInterface.OnClickListener() {
-				   public void onClick(DialogInterface dialog, int whichButton) { } })
-			   .create();
+				   public void onClick(DialogInterface dialog, int whichButton) { }
+				}
+			);
+
+   	        WebView HelpView = new WebView(this);
+            HelpView.loadUrl("http://wiki.android-os-monitor.googlecode.com/hg/phonehelp.html?r=b1c196ee43855882e59ad5b015b953d62c95729d");
+            HelpWindows.setView(HelpView);
+
+        	return HelpWindows.create(); 
+        	
     	case 1:
     		LinearLayout Layout = new LinearLayout(this);
     		Layout.setOrientation(LinearLayout.VERTICAL);
@@ -334,25 +319,23 @@ public class NetworkList extends MapActivity
 
     		CheckBox UseHTML = new CheckBox(this);
     		UseHTML.setId(200);
-    		UseHTML.setText("HTML Format");
+    		UseHTML.setText("HTML");
     		
     		Layout.addView(FileName, 0);
     		Layout.addView(UseHTML, 1);
     		
     		return new AlertDialog.Builder(this)
-            .setTitle(R.string.exportfile_title)
+            .setTitle(R.string.common_exportfile_title)
             .setView(Layout)
-            .setPositiveButton(R.string.btnok_title, new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 	String FileName = ((EditText)((AlertDialog)dialog).findViewById(100)).getText().toString();
                 	Boolean useHTML = ((CheckBox)((AlertDialog)dialog).findViewById(200)).isChecked();
                 	SaveLog(FileName, useHTML);
-//                	SaveLog(((EditText)((AlertDialog)dialog).getCurrentFocus()).getText().toString());
                 }
             })
-            .setNegativeButton(R.string.btncancel_title, new DialogInterface.OnClickListener() {
+            .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
-                    /* User clicked cancel so do some stuff */
                 }
             })
             .create();    	}
@@ -362,6 +345,8 @@ public class NetworkList extends MapActivity
     
     private String GetAppInfo(String AppName, int UID)
     {
+    	PackageManager AppInfo = getPackageManager();	
+    	
 		PackageInfo appPackageInfo = null;
 		String PackageName = null;
 		if(AppName.contains(":"))
@@ -404,21 +389,16 @@ public class NetworkList extends MapActivity
     {
     	if(FileName.trim().equals(""))
     		return;
-    	   	
+    	
     	try {
-    		
-    		File baseDirFile = new File(baseDir);
-        	if (!baseDirFile.exists()) baseDirFile.mkdir();
-        	
-        	File LogFile = new File(baseDir + FileName);
+        	File LogFile = new File("/sdcard/" + FileName);
     		
         	if (LogFile.exists())
         	{
         		new AlertDialog.Builder(this)
-    		   		.setIcon(R.drawable.appicon)
     		   		.setTitle(R.string.app_name)
-    		   		.setMessage(R.string.exportexist_title)
-    		   		.setPositiveButton(R.string.btnok_title,
+    		   		.setMessage(R.string.common_exportexist_title)
+    		   		.setPositiveButton(R.string.button_ok,
     		   				new DialogInterface.OnClickListener() {
     		   			public void onClick(DialogInterface dialog, int whichButton) { } })
     		   		.create()
@@ -426,10 +406,8 @@ public class NetworkList extends MapActivity
         		return;
         	}
 
-        	LogFile.createNewFile();
-        	
         	int LogCount = JNILibrary.GetNetworkCounts();
-        	
+        	LogFile.createNewFile();
         	FileWriter TextFile = new FileWriter(LogFile);
         	
         	if(useHTML)
@@ -462,10 +440,9 @@ public class NetworkList extends MapActivity
 
     	} catch (Exception e) {
     		new AlertDialog.Builder(this)
-	   		.setIcon(R.drawable.appicon)
 	   		.setTitle(R.string.app_name)
 	   		.setMessage(e.getMessage())
-	   		.setPositiveButton(R.string.btnok_title,
+	   		.setPositiveButton(R.string.button_ok,
 	   				new DialogInterface.OnClickListener() {
 	   			public void onClick(DialogInterface dialog, int whichButton) { } })
 	   		.create()
@@ -474,11 +451,10 @@ public class NetworkList extends MapActivity
     		return;
     	}
     	
-		new AlertDialog.Builder(this)
-   		.setIcon(R.drawable.appicon)
+  		new AlertDialog.Builder(this)
    		.setTitle(R.string.app_name)
-   		.setMessage("Connectionlist successfully exported to:\n"+baseDir+FileName)
-   		.setPositiveButton(R.string.btnok_title,
+   		.setMessage(R.string.common_exportdone_title)
+   		.setPositiveButton(R.string.button_ok,
    				new DialogInterface.OnClickListener() {
    			public void onClick(DialogInterface dialog, int whichButton) { } })
    		.create()
@@ -512,7 +488,7 @@ public class NetworkList extends MapActivity
         	if(OSMonitorService.getInstance() != null)
         		OSMonitorService.getInstance().stopSelf();
 
-        	JNILibrary.killSelf(this);
+        	CommonUtil.killSelf(this);
 
         	break;
         }
@@ -551,15 +527,6 @@ public class NetworkList extends MapActivity
     		if(!UseWhois || JNILibrary.GetNetworkRemoteIP(position).equals("0.0.0.0"))
     			return;
     		
-    		if(JNILibrary.GetNetworkRemoteIP(position).equals("88.198.156.18"))
-    		{
-    			Builder Alert = new Builder(Self);
-    			Alert.setTitle("Whois API IP");
-    			Alert.setMessage("http://en.utrace.de/api.php");
-    			Alert.show();
-    			return;
-    		}
-    		
     		String QueryIP = "";
        		if(JNILibrary.GetNetworkProtocol(position).equals("TCP6") ||
         			JNILibrary.GetNetworkProtocol(position).equals("UDP6"))
@@ -576,7 +543,7 @@ public class NetworkList extends MapActivity
        		
        		if(QueryIP.equals("88.198.156.18"))
        		{
-    			Builder Alert = new Builder(Self);
+    			Builder Alert = new Builder(NetworkList.this);
     			Alert.setTitle("Whois API IP");
     			Alert.setMessage("http://en.utrace.de/api.php");
     			Alert.show();
@@ -584,22 +551,24 @@ public class NetworkList extends MapActivity
        		}
     		
     		// show progress dialog
-    		ProcDialog = ProgressDialog.show(ProcContext, getResources().getText(R.string.whoisdialog_title),
-    					getResources().getText(R.string.waitdialog_title), true);
+    		ProcDialog = ProgressDialog.show( NetworkList.this, getResources().getText(R.string.pref_whoisdialog_title),
+    					getResources().getText(R.string.message_waiting), true);
     		
     		ProcDialog.setOnCancelListener(new DialogInterface.OnCancelListener() 
     		{
     			public void onCancel(DialogInterface dialog) 
     			{
-    				ProcThread.ForceStop = true;
-    				ProcThread.stop();
+    				if(ProcThread != null) {
+    					ProcThread.ForceStop = true;
+    					ProcThread.stop();
+    					ProcThread = null;
+    				}
     			}
     		});
     		ProcDialog.setCancelable(true);
 
     		ProcThread = new QueryWhois();
 			ProcThread.QueryIP = QueryIP;
-
     		ProcThread.start();
     	}
     };
@@ -615,22 +584,30 @@ public class NetworkList extends MapActivity
     	MapBody.setGravity(Gravity.CENTER);
     	MapBody.addView(MsgBody);
     	*/
-    	MapBody = new FrameLayout(this);
+    	
+    	FrameLayout MapBody = new FrameLayout(this);	
+   		MapBodyRef = new WeakReference<FrameLayout>(MapBody);
+    	
         MapBody.addView(GeoIPMap);
-        
+        MapController GeoIPControl = GeoIPMap.getController();
+
         GeoPoint MapPoint = new GeoPoint((int)Longitude,(int)Latitude);
+		GeoIPControl.setZoom(8);
         GeoIPControl.animateTo(MapPoint);
         GeoIPControl.setCenter(MapPoint);
     	GeoIPMap.getOverlays().add(new MapOverlay(this, MapPoint, R.drawable.point));
 
-        WhoisAlert = new AlertDialog.Builder(this);
+    	AlertDialog.Builder WhoisAlert = new AlertDialog.Builder(this);
     	WhoisAlert.setTitle("Whois");
     	WhoisAlert.setMessage(Msg);
     	WhoisAlert.setView(MapBody);
     	WhoisAlert.setOnCancelListener(new DialogInterface.OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
-		        MapBody.removeView(GeoIPMap); 
+		    	if(MapBodyRef != null && MapBodyRef.get() != null) {
+		    		MapBodyRef.get().removeAllViews();
+		    	}
+				
 			}
 		});
     	WhoisAlert.show();
@@ -647,7 +624,7 @@ public class NetworkList extends MapActivity
     private class NetworkListAdapter extends BaseAdapter {
         public NetworkListAdapter(Context context)
         {
-            mContext = context;
+           // mContext = context;
         }
 
         /**
@@ -724,17 +701,19 @@ public class NetworkList extends MapActivity
             if (convertView == null) {
             	if(RDNS)
             	{
-            		sv = new NetworkDetailView(mContext, JNILibrary.GetNetworkProtocol(position),
-            										 LocalDNS,
-                									 JNILibrary.GetNetworkLocalPort(position),
-                				                     RemoteDNS,
-                									 JNILibrary.GetNetworkRemotePort(position),
-                									 JNILibrary.GetNetworkStatus(position),
-                									 AppName,
-                									 position);
+            		sv = new NetworkDetailView(getApplication(),
+            				 JNILibrary.GetNetworkProtocol(position),
+            				 LocalDNS,
+            				 JNILibrary.GetNetworkLocalPort(position),
+            				 RemoteDNS,
+            				 JNILibrary.GetNetworkRemotePort(position),
+            				 JNILibrary.GetNetworkStatus(position),
+            				 AppName,
+            				 position);
             	}
             	else
-                    sv = new NetworkDetailView(mContext, JNILibrary.GetNetworkProtocol(position),
+                    sv = new NetworkDetailView(getApplication(),
+                    		 JNILibrary.GetNetworkProtocol(position),
 		                     JNILibrary.GetNetworkLocalIP(position),
 							 JNILibrary.GetNetworkLocalPort(position),
 		                     JNILibrary.GetNetworkRemoteIP(position),
@@ -772,7 +751,7 @@ public class NetworkList extends MapActivity
         /**
          * Remember our context so we can use it when constructing views.
          */
-        private Context mContext;
+        //private Context mContext;
     }
     
     /**
@@ -803,9 +782,9 @@ public class NetworkList extends MapActivity
 
             ProtocolField.setGravity(Gravity.LEFT);
             ProtocolField.setPadding(3, 3, 3, 3);
-            if(CompareFunc.getScreenSize()== 2)
+            if(CommonUtil.getScreenSize()== 2)
                 ProtocolField.setWidth(70);
-            else if(CompareFunc.getScreenSize() == 0)
+            else if(CommonUtil.getScreenSize() == 0)
             	ProtocolField.setWidth(32);
             else
             	ProtocolField.setWidth(45);
@@ -817,9 +796,9 @@ public class NetworkList extends MapActivity
             StatusField.setGravity(Gravity.LEFT);
             StatusField.setPadding(3, 3, 3, 3);
 
-            if(CompareFunc.getScreenSize() == 2)
+            if(CommonUtil.getScreenSize() == 2)
                 StatusField.setWidth(140);
-            else if(CompareFunc.getScreenSize() == 0)
+            else if(CommonUtil.getScreenSize() == 0)
             	StatusField.setWidth(75);
             else
             	StatusField.setWidth(95);
@@ -837,13 +816,17 @@ public class NetworkList extends MapActivity
             ConnectionRow.addView(IPField);
             ConnectionRow.addView(StatusField);
             addView(ConnectionRow);
-            
+
             ExtendRow = new TableRow(context);
             APPField.setText(AppName);
             ExtendRow.addView(new TextView(context));
             ExtendRow.addView(APPField);
             ExtendRow.addView(new TextView(context));
             addView(ExtendRow);
+
+            TableRow.LayoutParams RowParams = (TableRow.LayoutParams)APPField.getLayoutParams();
+            RowParams.span = 2;
+            APPField.setLayoutParams(RowParams);
 
             if(position % 2 == 0)
 	     		setBackgroundColor(0x80444444);

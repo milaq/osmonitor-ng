@@ -24,8 +24,8 @@ public class SetCPURangePreference extends DialogPreference {
 		if(GetCPUFreqList() == null)
 			return new View(this.getContext());
 
-		this.FreqMaxSpinner = new Spinner(this.getContext());
-		this.FreqMinSpinner = new Spinner(this.getContext());
+		FreqMaxSpinner = new Spinner(this.getContext());
+		FreqMinSpinner = new Spinner(this.getContext());
 
 		ArrayAdapter<String> FreqAdapter = new ArrayAdapter<String>(this.getContext(), android.R.layout.simple_spinner_item,
 																GetCPUFreqList());
@@ -96,8 +96,9 @@ public class SetCPURangePreference extends DialogPreference {
 	@Override
 	protected void onDialogClosed(boolean positiveResult) {
 		if(positiveResult){
-			persistString(FreqMinSpinner.getSelectedItem().toString()+ ";"+
-						  FreqMaxSpinner.getSelectedItem().toString());
+			if(FreqMinSpinner != null && FreqMaxSpinner != null)
+				persistString(FreqMinSpinner.getSelectedItem().toString()+ ";"+
+						      FreqMaxSpinner.getSelectedItem().toString());
 		}
 		super.onDialogClosed(positiveResult);
 	}

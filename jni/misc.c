@@ -1,150 +1,142 @@
 #include "misc.h"
 
-processor_info cur_processor;
+processor_info cur_processor[8];
+unsigned int omaptemp = 0;
+int cur_processor_num = 0;
 
 void misc_dump_processor()
 {
-	// get cpu max freq
-	FILE *cpufile = fopen(CPUINFO_MAX, "r");
-	if(!cpufile)
-		cur_processor.cpumax =0;
-	else
-	{
-		fscanf(cpufile, "%d", &cur_processor.cpumax);
-		fclose(cpufile);
-	}
+	char buf[128];
+	int i;
 
-	// get cpu min freq
-	cpufile = fopen(CPUINFO_MIN, "r");
-	if(!cpufile)
-		cur_processor.cpumin =0;
-	else
+	for(i=0; i<8; i++)
 	{
-		fscanf(cpufile, "%d", &cur_processor.cpumin);
-		fclose(cpufile);
-	}
+		sprintf(buf, CPUINFO_MAX, i);
 
-	// get scaling cur freq
-	cpufile = fopen(CPU_SCALING_CUR, "r");
-	if(!cpufile)
-		cur_processor.scalcur =0;
-	else
-	{
-		fscanf(cpufile, "%d", &cur_processor.scalcur);
-		fclose(cpufile);
-	}
+		// get cpu max freq
+		FILE *cpufile = fopen(buf, "r");
+		if(!cpufile)
+			cur_processor[i].cpumax =0;
+		else
+		{
+			fscanf(cpufile, "%d", &cur_processor[i].cpumax);
+			fclose(cpufile);
+			cur_processor_num = i+1;
+		}
 
-	// get scaling max freq
-	cpufile = fopen(CPU_SCALING_MAX, "r");
-	if(!cpufile)
-		cur_processor.scalmax =0;
-	else
-	{
-		fscanf(cpufile, "%d", &cur_processor.scalmax);
-		fclose(cpufile);
-	}
+		sprintf(buf, CPUINFO_MIN, i);
 
-	// get scaling min freq
-	cpufile = fopen(CPU_SCALING_MIN, "r");
-	if(!cpufile)
-		cur_processor.scalmin =0;
-	else
-	{
-		fscanf(cpufile, "%d", &cur_processor.scalmin);
-		fclose(cpufile);
-	}
+		// get cpu min freq
+		cpufile = fopen(buf, "r");
+		if(!cpufile)
+			cur_processor[i].cpumin =0;
+		else
+		{
+			fscanf(cpufile, "%d", &cur_processor[i].cpumin);
+			fclose(cpufile);
+		}
 
-	// get scaling governor
-	cpufile = fopen(CPU_SCALING_GOR, "r");
-	if(!cpufile)
-		strcpy(cur_processor.scalgov, "");
-	else
-	{
-		fscanf(cpufile, "%s", cur_processor.scalgov);
-		fclose(cpufile);
+		sprintf(buf, CPU_SCALING_CUR, i);
+
+		// get scaling cur freq
+		cpufile = fopen(buf, "r");
+		if(!cpufile)
+			cur_processor[i].scalcur =0;
+		else
+		{
+			fscanf(cpufile, "%d", &cur_processor[i].scalcur);
+			fclose(cpufile);
+		}
+
+		sprintf(buf, CPU_SCALING_MAX, i);
+
+		// get scaling max freq
+		cpufile = fopen(buf, "r");
+		if(!cpufile)
+			cur_processor[i].scalmax =0;
+		else
+		{
+			fscanf(cpufile, "%d", &cur_processor[i].scalmax);
+			fclose(cpufile);
+		}
+
+		sprintf(buf, CPU_SCALING_MIN, i);
+
+		// get scaling min freq
+		cpufile = fopen(buf, "r");
+		if(!cpufile)
+			cur_processor[i].scalmin =0;
+		else
+		{
+			fscanf(cpufile, "%d", &cur_processor[i].scalmin);
+			fclose(cpufile);
+		}
+
+		sprintf(buf, CPU_SCALING_GOR, i);
+
+		// get scaling governor
+		cpufile = fopen(buf, "r");
+		if(!cpufile)
+			strcpy(cur_processor[i].scalgov, "");
+		else
+		{
+			fscanf(cpufile, "%s", cur_processor[i].scalgov);
+			fclose(cpufile);
+		}
+
 	}
 
 	// OMAP3430 temperature
-	cpufile = fopen(OMAP_TEMPERATURE, "r");
+	FILE *cpufile = fopen(OMAP_TEMPERATURE, "r");
 	if(!cpufile)
-		cur_processor.omaptemp = 0;
+		omaptemp = 0;
 	else
 	{
-		fscanf(cpufile, "%d", &cur_processor.omaptemp);
+		fscanf(cpufile, "%d", &omaptemp);
 		fclose(cpufile);
 	}
 
-/*	// AKM8976A
-	int akmfd = open(AKM_DEVICE_NAME, O_RDONLY);
-    struct input_event event;
-
-    if(akmfd)
-    {
-    	__android_log_write(ANDROID_LOG_WARN,"AKM8976A","Enter");
-
-        while (1) {
-			  __android_log_write(ANDROID_LOG_WARN,"AKM8976A","Read Event");
-              struct input_event event;
-              int nread = read(akmfd, &event, sizeof(event));
-              if (nread == sizeof(event)) {
-                  uint32_t v;
-                  if (event.type == EV_ABS)
-                  {
-        			  __android_log_write(ANDROID_LOG_WARN,"AKM8976A","Read EVABS");
-
-                      //LOGD("type: %d code: %d value: %-5d time: %ds",
-                      //        event.type, event.code, event.value,
-                      //      (int)event.time.tv_sec);
-                      if(event.code == EVENT_TYPE_TEMPERATURE)
-                      {
-							  __android_log_write(ANDROID_LOG_WARN,"AKM8976A","IS TEMPERATURE");
-                              cur_processor.akmtemp = event.value;
-                              break;
-                      }
-                  }
-              }
-        }
-    }
-	close(akmfd);
-*/
-
-
 }
 
-int misc_get_processor_cpumax()
+int misc_get_processor_cpumax(int num)
 {
-	return cur_processor.cpumax;
+	return cur_processor[num].cpumax;
 }
 
-int misc_get_processor_cpumin()
+int misc_get_processor_cpumin(int num)
 {
-	return cur_processor.cpumin;
+	return cur_processor[num].cpumin;
 }
 
-int misc_get_processor_scalcur()
+int misc_get_processor_scalcur(int num)
 {
-	return cur_processor.scalcur;
+	return cur_processor[num].scalcur;
 }
 
-int misc_get_processor_scalmax()
+int misc_get_processor_scalmax(int num)
 {
-	return cur_processor.scalmax;
+	return cur_processor[num].scalmax;
 }
 
-int misc_get_processor_scalmin()
+int misc_get_processor_scalmin(int num)
 {
-	return cur_processor.scalmin;
+	return cur_processor[num].scalmin;
 }
 
-void misc_get_processor_scalgov(char* buf)
+void misc_get_processor_scalgov(int num, char* buf)
 {
-	strcpy(buf, cur_processor.scalgov);
+	strcpy(buf, cur_processor[num].scalgov);
 	return;
+}
+
+int misc_get_processor_number()
+{
+	return cur_processor_num;
 }
 
 int misc_get_processor_omaptemp()
 {
-	return cur_processor.omaptemp;
+	return omaptemp;
 }
 
 power_info cur_powerinfo;
@@ -287,61 +279,85 @@ void misc_dump_filesystem()
 
 double misc_get_filesystem_systemtotal()
 {
+	if(systemfs.f_blocks * systemfs.f_bsize == 0)
+		return 0;
 	return ((long long)systemfs.f_blocks * (long long)systemfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_datatotal()
 {
+	if(datafs.f_blocks * datafs.f_bsize == 0)
+		return 0;
 	return ((long long)datafs.f_blocks * (long long)datafs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_sdcardtotal()
 {
+	if(sdcardfs.f_blocks * sdcardfs.f_bsize == 0)
+		return 0;
 	return ((long long)sdcardfs.f_blocks * (long long)sdcardfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_cachetotal()
 {
+	if(cachefs.f_blocks * cachefs.f_bsize == 0)
+		return 0;
 	return ((long long)cachefs.f_blocks * (long long)cachefs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_systemused()
 {
+	if(systemfs.f_blocks * systemfs.f_bfree == 0)
+		return 0;
 	return ((long long)(systemfs.f_blocks - (long long)systemfs.f_bfree) * systemfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_dataused()
 {
+	if(datafs.f_blocks * datafs.f_bfree == 0)
+		return 0;
 	return ((long long)(datafs.f_blocks - (long long)datafs.f_bfree) * datafs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_sdcardused()
 {
+	if(sdcardfs.f_blocks * sdcardfs.f_bfree == 0)
+		return 0;
 	return ((long long)(sdcardfs.f_blocks - (long long)sdcardfs.f_bfree) * sdcardfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_cacheused()
 {
+	if(cachefs.f_blocks * cachefs.f_bfree == 0)
+		return 0;
 	return ((long long)(cachefs.f_blocks - (long long)cachefs.f_bfree) * cachefs.f_bsize) / 1024;
 }
 
 
 double misc_get_filesystem_systemavail()
 {
+	if(systemfs.f_bfree * systemfs.f_bsize == 0)
+		return 0;
 	return ((long long)systemfs.f_bfree * (long long)systemfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_dataavail()
 {
+	if(datafs.f_bfree * datafs.f_bsize == 0)
+		return 0;
 	return ((long long)datafs.f_bfree * (long long)datafs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_sdcardavail()
 {
+	if(sdcardfs.f_bfree * sdcardfs.f_bsize == 0)
+		return 0;
 	return ((long long)sdcardfs.f_bfree * (long long)sdcardfs.f_bsize) / 1024;
 }
 
 double misc_get_filesystem_cacheavail()
 {
+	if(cachefs.f_bfree * cachefs.f_bsize == 0)
+		return 0;
 	return ((long long)cachefs.f_bfree * (long long)cachefs.f_bsize) / 1024;
 }

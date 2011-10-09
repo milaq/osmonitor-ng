@@ -23,30 +23,26 @@ import java.util.Date;
 
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.AlertDialog.Builder;
 import android.app.Dialog;
-import android.app.TabActivity;
+import android.app.AlertDialog.Builder;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.net.Uri;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.View.OnClickListener;
-import android.view.View.OnTouchListener;
 import android.view.ViewGroup.LayoutParams;
+import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseAdapter;
@@ -63,10 +59,11 @@ import de.milaq.osmonitor.*;
 import de.milaq.osmonitor.misc.SysUtils;
 import de.milaq.osmonitor.preferences.Preferences;
 
-public class DebugBox extends Activity {
+public class DebugBox extends Activity
+{
 	private JNIInterface JNILibrary = JNIInterface.getInstance();
 	
-	private DebugBox Self = null;
+	//private DebugBox Self = null;
 	private BaseAdapter UpdateInterface = null;	
 	private ListView InternalList = null;
 	private TextView EmptyMsg = null;
@@ -74,32 +71,30 @@ public class DebugBox extends Activity {
 	private String Mode = "dmesg";
 	private String baseDir = "/sdcard/OSMonitorNG/";
 	
-	private boolean FirstView = false;
 	private boolean FreezeIt = false;
 	private boolean FilterIt = false;
 	
 	// watch log
-	private int targetPID = 0; 
-    
+	private int targetPID = 0; 	
 	
 	// Refresh
     private Runnable runnable = new Runnable() {
 		public void run() {
-
- 			if(!FreezeIt){
- 				if(JNILibrary.doDataLoad() == 1)
- 				{
- 			    	if(Mode.equals("dmesg"))
- 				    	MsgCountText.setText("dmesg #"+JNILibrary.GetDebugMessageCounts());
- 				    else
- 				    	MsgCountText.setText("logcat #"+JNILibrary.GetLogcatCounts());
- 					
- 					if(EmptyMsg != null)
- 						EmptyMsg.setText("");
-
- 					Self.onRefresh();
- 				}
- 			}
+			if(!FreezeIt){
+				if(JNILibrary.doDataLoad() == 1)
+				{
+ 			   		if(Mode.equals("dmesg"))
+ 			   			MsgCountText.setText("dmesg #"+JNILibrary.GetDebugMessageCounts());
+ 			   		else
+ 			   			MsgCountText.setText("logcat #"+JNILibrary.GetLogcatCounts());
+ 				
+ 			   		if(EmptyMsg != null)
+ 			   			EmptyMsg.setText("");
+ 				
+ 			   		JNILibrary.doDataSwap();
+ 			   		UpdateInterface.notifyDataSetChanged();
+				}
+			}
 	        handler.postDelayed(this, 1000);
 		}
 	};   
@@ -114,10 +109,10 @@ public class DebugBox extends Activity {
         requestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.debuglayout);
         
-		Self = this;
+        InternalList = (ListView) findViewById(R.id.debuglist);
         EmptyMsg = (TextView) findViewById(R.id.debugempty);
         MsgCountText = (TextView) findViewById(R.id.debugmsgcounts);
-        
+         
         // Filter
         CheckBox Filter = (CheckBox) findViewById(R.id.debugmsgfilter);
         Filter.setOnClickListener(
@@ -135,37 +130,22 @@ public class DebugBox extends Activity {
         	}
         );
         
+        
         // Freeze
         CheckBox Freeze = (CheckBox) findViewById(R.id.debugmsgfreeze);
         Freeze.setOnClickListener(
         	new OnClickListener(){
         		public void onClick(View v) {
         			if(FreezeIt)
-        			{
         				FreezeIt = false;
-        			}
         			else
-        			{
         				FreezeIt = true;
-        			}
 				}
         	}
         );
+         
     }
-    
-    public void onRefresh()
-    {
-		JNILibrary.doDataSwap();
-		UpdateInterface.notifyDataSetChanged();
-
-		if(FirstView)
-    	{
-    		InternalList.setSelection(UpdateInterface.getCount());
-			FirstView = false;
-    	}
-
-    }
-    
+   
     public boolean onCreateOptionsMenu(Menu optionMenu) 
     {
      	super.onCreateOptionsMenu(optionMenu);
@@ -173,17 +153,14 @@ public class DebugBox extends Activity {
      	if(targetPID == 0)
      		optionMenu.add(0, 6, 0, getResources().getString(R.string.switchlogs_text));
      	
-     	if(targetPID == 0)
-     		optionMenu.add(0, 3, 0, getResources().getString(R.string.filter_text));
-     	
-     	optionMenu.add(0, 2, 0, getResources().getString(R.string.logexport_title));
-     	
-     	if(targetPID == 0)
-     		optionMenu.add(0, 1, 0, getResources().getString(R.string.options_text));
+     	optionMenu.add(0, 3, 0, getResources().getString(R.string.pref_filterlevel_text));
+     	optionMenu.add(0, 2, 0, getResources().getString(R.string.menu_logexport));
+     	optionMenu.add(0, 1, 0, getResources().getString(R.string.menu_options));
 
-        optionMenu.add(0, 4, 0, getResources().getString(R.string.aboutoption_text));
-     	
-       	optionMenu.add(0, 5, 0, getResources().getString(R.string.forceexit_text));
+     	if(targetPID == 0)
+           	optionMenu.add(0, 4, 0, getResources().getString(R.string.menu_help));
+
+       	optionMenu.add(0, 5, 0, getResources().getString(R.string.menu_forceexit));
     	return true;
     }
 
@@ -311,22 +288,26 @@ public class DebugBox extends Activity {
     	}
     }
     
-    
     @Override
     protected Dialog onCreateDialog(int id) 
     {
     	switch (id)
     	{
     	case 0:
-        	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.appicon)
-			   .setTitle(R.string.app_name)
-			   .setMessage(R.string.about_text)
-			   .setPositiveButton(R.string.aboutbtn_text,
+    		AlertDialog.Builder HelpWindows = new AlertDialog.Builder(this);
+    		HelpWindows.setTitle(R.string.app_name);
+			HelpWindows.setMessage(R.string.help_info);
+			HelpWindows.setPositiveButton(R.string.button_close,
 			   new DialogInterface.OnClickListener() {
-				   public void onClick(DialogInterface dialog, int whichButton) { } })
-			   .create();
-        	
+				   public void onClick(DialogInterface dialog, int whichButton) { }
+				}
+			);
+
+   	        WebView HelpView = new WebView(this);
+            HelpView.loadUrl("http://wiki.android-os-monitor.googlecode.com/hg/phonehelp.html?r=b1c196ee43855882e59ad5b015b953d62c95729d");
+            HelpWindows.setView(HelpView);
+
+        	return HelpWindows.create(); 
     	case 1:
     		LinearLayout Layout = new LinearLayout(this);
     		Layout.setOrientation(LinearLayout.VERTICAL);
@@ -344,16 +325,16 @@ public class DebugBox extends Activity {
     		Layout.addView(UseHTML, 1);
     		
     		return new AlertDialog.Builder(this)
-            .setTitle(R.string.exportfile_title)
+            .setTitle(R.string.common_exportfile_title)
             .setView(Layout)
-            .setPositiveButton(R.string.btnok_title, new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 	String FileName = ((EditText)((AlertDialog)dialog).findViewById(100)).getText().toString();
                 	Boolean useHTML = ((CheckBox)((AlertDialog)dialog).findViewById(200)).isChecked();
                 	SaveLog(FileName, useHTML);
                 }
             })
-            .setNegativeButton(R.string.btncancel_title, new DialogInterface.OnClickListener() {
+            .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                     /* User clicked cancel so do some stuff */
                 }
@@ -366,32 +347,41 @@ public class DebugBox extends Activity {
     		FilterLayout.setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT,
     									LayoutParams.FILL_PARENT));
     		TextView FilterTagDesc = new TextView(this);
-    		FilterTagDesc.setText(R.string.filterstr_text);
+    		FilterTagDesc.setText(R.string.pref_filterstr_text);
     		TextView LogLevelDesc = new TextView(this);
-    		LogLevelDesc.setText(R.string.filterlevel_text);
+    		LogLevelDesc.setText(R.string.pref_filterlevel_text);
     		EditText FilterTag = new EditText(this);
     		FilterTag.setId(200);
+
     		Spinner LogLevel = new Spinner(this);
     		LogLevel.setId(100);
+
+
+
+
+
     		FilterLayout.addView(LogLevel, 0);
     		FilterLayout.addView(LogLevelDesc, 0);
     		FilterLayout.addView(FilterTag, 0);
     		FilterLayout.addView(FilterTagDesc, 0);
+
     		return new AlertDialog.Builder(this)
             .setTitle(R.string.filter_text)
             .setView(FilterLayout)
-            .setPositiveButton(R.string.btnok_title, new DialogInterface.OnClickListener() {
+            .setPositiveButton(R.string.button_ok, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 	ApplyLevelFilter(((Spinner)((AlertDialog)dialog).findViewById(100)).getSelectedItemId());
     				ApplyTagFilter(((EditText)((AlertDialog)dialog).findViewById(200)).getText().toString());
     				if (FilterIt) onResume();
+
+
                 }
             })
-            .setNegativeButton(R.string.btncancel_title, new DialogInterface.OnClickListener() {
+            .setNegativeButton(R.string.button_cancel, new DialogInterface.OnClickListener() {
                 public void onClick(DialogInterface dialog, int whichButton) {
                 }
             })
-            .create();
+            .create();    		
     	}
     	
     	return null;
@@ -464,8 +454,7 @@ public class DebugBox extends Activity {
     		return;
     	
     	try {
-
-        	File baseDirFile = new File(baseDir);
+    		File baseDirFile = new File(baseDir);
         	if (!baseDirFile.exists()) baseDirFile.mkdir();
     		
     		File LogFile = new File(baseDir + FileName);
@@ -474,10 +463,9 @@ public class DebugBox extends Activity {
         	{
         		if (!LogFile.toString().equals(baseDir+Mode.toLowerCase()+"-mailexport.log")){
         		new AlertDialog.Builder(this)
-    		   		.setIcon(R.drawable.appicon)
     		   		.setTitle(R.string.app_name)
-    		   		.setMessage(R.string.exportexist_title)
-    		   		.setPositiveButton(R.string.btnok_title,
+    		   		.setMessage(R.string.common_exportexist_title)
+    		   		.setPositiveButton(R.string.button_ok,
     		   				new DialogInterface.OnClickListener() {
     		   			public void onClick(DialogInterface dialog, int whichButton) { } })
     		   		.create()
@@ -539,10 +527,9 @@ public class DebugBox extends Activity {
 
     	} catch (Exception e) {
     		new AlertDialog.Builder(this)
-	   		.setIcon(R.drawable.appicon)
 	   		.setTitle(R.string.app_name)
 	   		.setMessage(e.getMessage())
-	   		.setPositiveButton(R.string.btnok_title,
+	   		.setPositiveButton(R.string.button_ok,
 	   				new DialogInterface.OnClickListener() {
 	   			public void onClick(DialogInterface dialog, int whichButton) { } })
 	   		.create()
@@ -553,10 +540,9 @@ public class DebugBox extends Activity {
     	
     	if (!FileName.equals(Mode.toLowerCase()+"-mailexport.log")){
   		new AlertDialog.Builder(this)
-   		.setIcon(R.drawable.appicon)
    		.setTitle(R.string.app_name)
    		.setMessage(Mode.toLowerCase()+" successfully exported to:\n"+baseDir+FileName)
-   		.setPositiveButton(R.string.btnok_title,
+   		.setPositiveButton(R.string.button_ok,
    				new DialogInterface.OnClickListener() {
    			public void onClick(DialogInterface dialog, int whichButton) { } })
    		.create()
@@ -600,7 +586,7 @@ public class DebugBox extends Activity {
         	break;
         
         case 3:
-            this.showDialog(2);
+        	this.showDialog(2);
         	break;
         	
         case 4:
@@ -611,12 +597,11 @@ public class DebugBox extends Activity {
         	if(OSMonitorService.getInstance() != null)
         		OSMonitorService.getInstance().stopSelf();
 
-        	JNILibrary.killSelf(this);
+        	CommonUtil.killSelf(this);
         	
     		break;
-    	
-    	case 6:
     		
+    	case 6:    		
     		CheckBox Freeze = (CheckBox) findViewById(R.id.debugmsgfreeze);
     		Freeze.setChecked(false);
     		if (FreezeIt) FreezeIt = false;
@@ -653,7 +638,7 @@ public class DebugBox extends Activity {
     	
     	return content;
     }
-    
+
     @Override
     public void onPause() 
     {
@@ -674,22 +659,20 @@ public class DebugBox extends Activity {
 		if(targetPID == 0)
     	{
     		restorePrefs();
-           		
+        
     		if(Mode.equals("dmesg"))
     			JNILibrary.doTaskStart(JNILibrary.doTaskDMesg);
     		else
     			JNILibrary.doTaskStart(JNILibrary.doTaskLogcat);
-
     	}
     	else
     	{
     		setTarget();
 			JNILibrary.doTaskStart(JNILibrary.doTaskLogcat);
-			CheckBox Filter = (CheckBox) findViewById(R.id.debugmsgfilter);
-			Filter.setEnabled(false);
     	}
-    	
-		FirstView = true;
+
+    	JNILibrary.TruncateDebugMessage();
+    	JNILibrary.TruncateLogcat();
     	
     	handler.post(runnable);
     	super.onResume();
@@ -704,7 +687,6 @@ public class DebugBox extends Activity {
     			position = JNILibrary.GetLogcatCounts();
     		
     		AlertDialog.Builder LogcatInfo = new AlertDialog.Builder(l.getContext());
-    		LogcatInfo.setTitle("Message");
     		LogcatInfo.setMessage(JNILibrary.GetLogcatMessage(position));
     		LogcatInfo.show();    		
     	}

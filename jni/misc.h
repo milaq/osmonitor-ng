@@ -17,12 +17,12 @@
 #define BATTERY_TEMPERATURE_PATH "/sys/class/power_supply/battery/batt_temp"
 
 /* cpu */
-#define CPUINFO_MAX "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
-#define CPUINFO_MIN "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq"
-#define CPU_SCALING_CUR "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq"
-#define CPU_SCALING_MAX "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"
-#define CPU_SCALING_MIN "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"
-#define CPU_SCALING_GOR "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"
+#define CPUINFO_MAX "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq"
+#define CPUINFO_MIN "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_min_freq"
+#define CPU_SCALING_CUR "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_cur_freq"
+#define CPU_SCALING_MAX "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq"
+#define CPU_SCALING_MIN "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_min_freq"
+#define CPU_SCALING_GOR "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor"
 
 #define AKM_DEVICE_NAME "/dev/akm8976_aot"
 #define OMAP_TEMPERATURE "/sys/class/hwmon/hwmon0/device/temp1_input"
@@ -33,17 +33,18 @@
 
 /* CPU INFO */
 typedef struct processor_proto {
-	unsigned int cpumax, cpumin, scalmax, scalmin, scalcur, omaptemp, akmtemp;
+	unsigned int cpumax, cpumin, scalmax, scalmin, scalcur;
 	char scalgov[BUFFERSIZE];
 } processor_info;
 
 void misc_dump_processor();
-int misc_get_processor_cpumax();
-int misc_get_processor_cpumin();
-int misc_get_processor_scalcur();
-int misc_get_processor_scalmax();
-int misc_get_processor_scalmin();
-void misc_get_processor_scalgov(char* buf);
+int misc_get_processor_cpumax(int num);
+int misc_get_processor_cpumin(int num);
+int misc_get_processor_scalcur(int num);
+int misc_get_processor_scalmax(int num);
+int misc_get_processor_scalmin(int num);
+void misc_get_processor_scalgov(int num, char* buf);
+int misc_get_processor_number();
 int misc_get_processor_omaptemp();
 
 /* Battery Module */

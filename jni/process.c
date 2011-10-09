@@ -1,6 +1,7 @@
 #include "process.h"
 
 /* CPU Module */
+long boot_time;
 int cpu_usage = 0;
 cpu_info pre_cpu, cur_cpu;
 int cpu_usage_bg = 0;
@@ -42,6 +43,21 @@ void cpu_refresh_usage()
 
 void cpu_init()
 {
+	// get uptime
+	long uptime = 0;
+	FILE *uptime_file = fopen("/proc/uptime", "r");
+
+	if(!uptime_file)
+		uptime =0;
+	else
+	{
+		fscanf(uptime_file, "%lu.%*lu", &uptime);
+		fclose(uptime_file);
+	}
+	time_t cur_time = time(0);
+
+	boot_time = cur_time - uptime;
+
 	cpu_dump();
 	return;
 }
@@ -111,7 +127,7 @@ unsigned long mem_get_buffers()
 /* Process Module*/
 
 int filter_by_system = 0;
-int sort_algorithm = 1;
+int sort_algorithm = 0;
 
 int cur_ps_count;
 process_info *cur_ps_list;
@@ -205,6 +221,8 @@ void ps_system_add(process_info *new_ps)
 		system->delta_stime += new_ps->delta_stime;
 		system->delta_utime += new_ps->delta_utime;
 		system->rss += new_ps->rss;
+		if(system->start_time > new_ps->start_time)
+			system->start_time = new_ps->start_time;
 		system->threadnum += new_ps->threadnum;
 	}
 }
@@ -288,6 +306,20 @@ int ps_list_setposition(process_info **work_list, process_info **work_ptr, int p
 }
 
 
+int ps_list_findpid(process_info **work_list, process_info **work_ptr, int pid)
+{
+	if(pid == -1)
+		return 1;
+
+	ps_list_reset(work_ptr);
+	while(ps_list_nextrecord(work_list, work_ptr))
+	{
+		if((*work_ptr)->pid == pid)
+			return 1;
+	}
+	return 0;
+}
+
 void ps_instance_dump(int pid)
 {
 	char statline[BUFFERSIZE*2];
@@ -324,9 +356,9 @@ void ps_instance_dump(int pid)
 
         /* Scan rest of string. */
         fscanf(ps, "%*d %*s %c %*d %*d %*d %*d %*d %*d %*d %*d %*d %*d "
-                     "%lu %lu %*d %*d %*d %*d %d %*d %*d %*lu %ld",
+                     "%lu %lu %*d %*d %*d %*d %d %*lu %lu %*lu %ld",
                      &psinfo.status, &psinfo.delta_utime, &psinfo.delta_stime,
-											 &psinfo.threadnum, &psinfo.rss);
+					 &psinfo.threadnum, &psinfo.start_time, &psinfo.rss);
 
         fclose(ps);
     }
@@ -356,6 +388,8 @@ void ps_instance_dump(int pid)
         		psinfo.name[strlen(psinfo.name)-1] = 0;
         }
     }
+
+    psinfo.nice = getpriority(PRIO_PROCESS, psinfo.pid);
 
     if(filter_by_system == 1)
     {
@@ -838,61 +872,60 @@ int ps_get_pid(int position)
 }
 
 
-int ps_get_uid(int position)
+int ps_get_uid(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		return current->uid;
 	return 0;
 }
 
-int ps_get_load(int position)
+int ps_get_load(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		return current->load;
 	return 0;
 }
 
-unsigned long ps_get_utime(int position)
+unsigned long ps_get_utime(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
-		return current->delta_utime;
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
+		return current->delta_utime/HZ;
 	return 0;
 }
 
-unsigned long ps_get_stime(int position)
+unsigned long ps_get_stime(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
-		return current->delta_stime;
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
+		return current->delta_stime/HZ;
 	return 0;
 }
 
-
-void ps_get_status(int position, char *buf)
+void ps_get_time(int pid, char *buf)
 {
-	if(cur_ps_count < position || position < 0)
+	process_info *current;
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 	{
-		buf[0] = 0;
-		return;
+		time_t cur_time = time(0);
+		cur_time = boot_time + current->start_time/HZ;
+		struct tm *local = localtime(&cur_time);
+		snprintf(buf, BUFFERSIZE, "%02d/%02d %02d:%02d:%02d", local->tm_mon+1, local->tm_mday,
+						local->tm_hour, local->tm_min, local->tm_sec);
 	}
+	else
+		strcpy(buf, "");
 
+	return;
+}
+
+
+void ps_get_status(int pid, char *buf)
+{
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		snprintf(buf, BUFFERSIZE, "%c", current->status);
 	else
 		snprintf(buf, BUFFERSIZE, "%c", 0);
@@ -900,56 +933,47 @@ void ps_get_status(int position, char *buf)
 	return;
 }
 
-void ps_get_name(int position, char *buf)
+void ps_get_name(int pid, char *buf)
 {
-	if(cur_ps_count < position || position < 0)
-	{
-		buf[0] = 0;
-		return;
-	}
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		strncpy(buf, current->name, BUFFERSIZE);
 	else
 		buf[0] = 0;
 	return;
 }
 
-void ps_get_owner(int position, char *buf)
+void ps_get_owner(int pid, char *buf)
 {
-	if(cur_ps_count < position || position < 0)
-	{
-		buf[0] = 0;
-		return;
-	}
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		strncpy(buf, current->owner, BUFFERSIZE);
 	else
 		buf[0] = 0;
 	return;
 }
 
-int ps_get_rss(int position)
+int ps_get_rss(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		return current->rss*4;
 	return 0;
 }
 
-int ps_get_threadnum(int position)
+int ps_get_nice(int pid)
 {
-	if(cur_ps_count < position || position < 0)
-		return 0;
-
 	process_info *current;
-	if(ps_list_setposition(&cur_ps_list, &current, position) != 0)
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
+		return current->nice;
+	return 0;
+}
+
+
+int ps_get_threadnum(int pid)
+{
+	process_info *current;
+	if(ps_list_findpid(&cur_ps_list, &current, pid) != 0)
 		return current->threadnum;
 	return 0;
 }

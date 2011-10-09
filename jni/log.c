@@ -17,6 +17,8 @@ int work_dmesg_count = 0;
 void *work_dmesg_list = (void *) 0;
 long pre_dmesg_time, cur_dmesg_time;
 
+int time_dmesg = 0;
+int truncate_dmesg = 0;
 int filter_dmesg = 0;
 char filter_dmesg_level;
 char filter_dmesg_string[BUFFERSIZE];
@@ -48,6 +50,9 @@ void dmesg_list_add(dmesg_item *new_dmesg)
 
 void dmesg_list_empty()
 {
+	work_dmesg_count = 0;
+	work_dmesg_list = 0;
+	/*
 	if(work_dmesg_list == (void *) 0)
 		return;
 
@@ -66,8 +71,14 @@ void dmesg_list_empty()
 		old_node = next_node;
 	}
 	free(old_node);
+	*/
 
 	return;
+}
+
+void dmesg_list_truncate()
+{
+	truncate_dmesg = 1;
 }
 
 int dmesg_list_nextrecord()
@@ -148,8 +159,7 @@ void dmesg_get_level(int position, char *buf)
 
 void dmesg_get_time(int position, char *buf)
 {
-	if(!dmesg_list_setpositon(position) ||
-		cur_dmesginfo->sec == 0)
+	if(!dmesg_list_setpositon(position) && time_dmesg == 0)
 	{
 		buf[0] = 0;
 		return;
@@ -197,6 +207,7 @@ void dmesg_dump()
 	int n, op, sp, ep;
 
 	dmesg_item cur_dmesg;
+	dmesg_item *chk_dmesg, *ptr_dmesg;
 
 	op = KLOG_READ_ALL;
 
@@ -204,6 +215,18 @@ void dmesg_dump()
 
 	if (op < 0)
 		return;
+
+	chk_dmesg = (void *) 0;
+	ptr_dmesg = ((dmesg_item *)cur_dmesg_list);
+	if(ptr_dmesg != (void *) 0)
+	{
+		while(ptr_dmesg->next != (void *) 0)
+		{
+			if(ptr_dmesg->sec < ((dmesg_item *) ptr_dmesg->next)->sec)
+				chk_dmesg = (dmesg_item *) ptr_dmesg->next;
+			ptr_dmesg = (dmesg_item *) ptr_dmesg->next;
+		}
+	}
 
 	dmesg_list_empty();
 
@@ -228,9 +251,16 @@ void dmesg_dump()
 		n = 0;
 
 		if(line[3] == '[')
+		{
 			n = sscanf(line, "<%c>[%lu.%*06lu] %[^\n]", &cur_dmesg.level, &cur_dmesg.sec, cur_dmesg.msg);
+			time_dmesg = 1;
+		}
 		else
+		{
 			n = sscanf(line, "<%c>%[^\n]", &cur_dmesg.level, cur_dmesg.msg);
+			time_dmesg = 0;
+		}
+
 		cur_dmesg.msg[strlen(cur_dmesg.msg)-1] = '\0';
 
 		if(n > 0)
@@ -247,6 +277,24 @@ void dmesg_dump()
 						filter_item = 0;
 			}
 
+			if( chk_dmesg != (void *) 0 && truncate_dmesg != 1)
+			{
+				if(cur_dmesg.sec < chk_dmesg->sec)
+					filter_item = 0;
+				else if(cur_dmesg.sec == chk_dmesg->sec)
+				{
+					ptr_dmesg = ((dmesg_item *)chk_dmesg);
+					do
+					{
+						if(strcmp(cur_dmesg.msg, ptr_dmesg->msg) == 0)
+							filter_item = 0;
+						ptr_dmesg = (dmesg_item *) ptr_dmesg->next;
+					} while ((ptr_dmesg != (void *) 0));
+
+				}
+			}
+
+
 			if(filter_item == 1)
 			{
 				cur_dmesg_time = cur_dmesg.sec;
@@ -262,8 +310,69 @@ void dmesg_dump()
 
 void dmesg_refresh()
 {
-	do_swapint(&cur_dmesg_count, &work_dmesg_count);
-	do_swapptr(&cur_dmesg_list, &work_dmesg_list);
+	if(truncate_dmesg == 1)
+	{
+
+		if(cur_dmesg_list != (void *) 0)
+		{
+
+			// reset
+			dmesg_item *old_node = (dmesg_item *) cur_dmesg_list;
+			cur_dmesg_list = (void *) 0;
+			cur_dmesg_count = 0;
+
+			// release memory
+			dmesg_item *next_node = (void *) 0;
+			while(old_node->next != (void *) 0)
+			{
+				next_node = (dmesg_item *) old_node->next;
+				free(old_node);
+
+				old_node = next_node;
+			}
+			free(old_node);
+		}
+
+		if(work_dmesg_list != (void *) 0)
+		{
+
+			// reset
+			dmesg_item *old_node = (dmesg_item *) work_dmesg_list;
+			work_dmesg_list = (void *) 0;
+			work_dmesg_count = 0;
+
+			// release memory
+			dmesg_item *next_node = (void *) 0;
+			while(old_node->next != (void *) 0)
+			{
+				next_node = (dmesg_item *) old_node->next;
+				free(old_node);
+
+				old_node = next_node;
+			}
+			free(old_node);
+		}
+
+		do_swapint(&cur_dmesg_count, &work_dmesg_count);
+		do_swapptr(&cur_dmesg_list, &work_dmesg_list);
+		truncate_dmesg = 0;
+		return;
+	}
+
+	cur_dmesg_count += work_dmesg_count;
+
+	if(cur_dmesg_list != (void*) 0)
+	{
+		dmesg_item *check_dmesg = ((dmesg_item *)cur_dmesg_list);
+		if(check_dmesg != (void *) 0)
+		{
+			while(check_dmesg->next != (void *) 0)
+				check_dmesg = (dmesg_item *) check_dmesg->next;
+		}
+		check_dmesg->next = work_dmesg_list;
+	}
+	else
+		cur_dmesg_list = work_dmesg_list;
 }
 
 int dmesg_check()
@@ -315,6 +424,7 @@ char filter_logcat_string[BUFFERSIZE];
 // cursor
 logcat_info *cur_logcatinfo = (void *) 0;
 time_t pre_logcat_time, cur_logcat_time;
+int truncate_logcat = 0;
 
 // logcat list
 int work_logcat_count = 0;
@@ -357,6 +467,9 @@ void logcat_list_empty()
 	if(work_logcat_list == (void *) 0)
 		return;
 
+	work_logcat_list = 0;
+	work_logcat_count = 0;
+/*
 	// reset
 	logcat_info *old_node = (logcat_info *) work_logcat_list;
 	work_logcat_list = (void *) 0;
@@ -372,8 +485,13 @@ void logcat_list_empty()
 		old_node = next_node;
 	}
 	free(old_node);
-
+*/
 	return;
+}
+
+void logcat_list_truncate()
+{
+	truncate_logcat = 1;
 }
 
 int logcat_list_nextrecord()
@@ -534,7 +652,24 @@ char *logcat_get_msg(int position)
 
 void logcat_get_readloglines(int logfd)
 {
+	logcat_info *chk_logcat, *ptr_logcat;
     logcat_list_empty();
+
+    chk_logcat = (void *) 0;
+    ptr_logcat = ((logcat_info *)cur_logcat_list);
+    if(ptr_logcat != (void *) 0)
+    {
+    	while(ptr_logcat->next != (void *) 0)
+    	{
+    		if(ptr_logcat->tv_sec < ((logcat_info *) ptr_logcat->next)->tv_sec)
+    			chk_logcat = (logcat_info *) ptr_logcat->next;
+    		if(ptr_logcat->tv_sec == ((logcat_info *) ptr_logcat->next)->tv_sec &&
+    			ptr_logcat->tv_nsec < ((logcat_info *) ptr_logcat->next)->tv_nsec)
+    			chk_logcat = (logcat_info *) ptr_logcat->next;
+
+    		ptr_logcat = (logcat_info *) ptr_logcat->next;
+    	}
+    }
 
     pre_logcat_time = cur_logcat_time;
 
@@ -581,6 +716,25 @@ void logcat_get_readloglines(int logfd)
         			filter_item =0;
         }
 
+        if(chk_logcat != (void *) 0)
+        {
+    		if(chk_logcat->tv_sec > entry->sec)
+    			filter_item = 0;
+    		else if(chk_logcat->tv_sec == entry->sec && chk_logcat->tv_nsec > entry->nsec)
+    			filter_item = 0;
+			else if(chk_logcat->tv_sec == entry->sec && chk_logcat->tv_nsec == entry->nsec)
+			{
+				ptr_logcat = ((logcat_info *)chk_logcat);
+				do
+				{
+					if(strcmp(msg, ptr_logcat->message) == 0)
+						filter_item = 0;
+					ptr_logcat  = (logcat_info *) ptr_logcat->next;
+				} while ((ptr_logcat != (void *) 0));
+			}
+
+        }
+
         if(filter_item == 1)
         {
             cur_logcat.tv_sec = entry->sec;
@@ -624,8 +778,71 @@ void logcat_dump()
 
 void logcat_refresh()
 {
-	do_swapint(&cur_logcat_count, &work_logcat_count);
-	do_swapptr(&cur_logcat_list, &work_logcat_list);
+	if(truncate_logcat == 1)
+	{
+
+		if(cur_logcat_list != (void *) 0)
+		{
+
+			// reset
+			logcat_info *old_node = (logcat_info *) cur_logcat_list;
+			cur_logcat_list = (void *) 0;
+			cur_logcat_count = 0;
+
+			// release memory
+			logcat_info *next_node = (void *) 0;
+			while(old_node->next != (void *) 0)
+			{
+				next_node = (logcat_info *) old_node->next;
+				free(old_node);
+
+				old_node = next_node;
+			}
+			free(old_node);
+		}
+
+		if(work_logcat_list != (void *) 0)
+		{
+
+			// reset
+			logcat_info *old_node = (logcat_info *) work_logcat_list;
+			work_logcat_list = (void *) 0;
+			work_logcat_count = 0;
+
+			// release memory
+			logcat_info *next_node = (void *) 0;
+			while(old_node->next != (void *) 0)
+			{
+				next_node = (logcat_info *) old_node->next;
+				free(old_node);
+
+				old_node = next_node;
+			}
+			free(old_node);
+		}
+
+		do_swapint(&cur_logcat_count, &work_logcat_count);
+		do_swapptr(&cur_logcat_list, &work_logcat_list);
+		truncate_logcat = 0;
+		return;
+	}
+
+	//do_swapint(&cur_logcat_count, &work_logcat_count);
+	cur_logcat_count += work_logcat_count;
+
+	//do_swapptr(&cur_logcat_list, &work_logcat_list);
+	if(cur_logcat_list != (void*) 0)
+	{
+		logcat_info *chk_logcat = ((logcat_info *)cur_logcat_list);
+		if(chk_logcat != (void *) 0)
+		{
+			while(chk_logcat->next != (void *) 0)
+				chk_logcat = (logcat_info *) chk_logcat->next;
+		}
+		chk_logcat->next = work_logcat_list;
+	}
+	else
+		cur_logcat_list = work_logcat_list;
 }
 
 int logcat_check()

@@ -10,6 +10,7 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <dirent.h>
 
 #include <pwd.h>
@@ -21,6 +22,8 @@
 
 #include <linux/if.h>
 #include <linux/sockios.h>
+#include <linux/param.h>
+#include <linux/wireless.h>
 
 #include <arpa/inet.h>
 

@@ -1,11 +1,13 @@
 package de.milaq.osmonitor.processes;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -15,16 +17,19 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.os.Debug;
 
 import de.milaq.osmonitor.*;
 
+
 public class ProcessInfoQuery extends Thread
 {
-	private static JNIInterface JNILibrary = JNIInterface.getInstance();
+	private JNIInterface JNILibrary = JNIInterface.getInstance();
 	
 	private static ProcessInfoQuery singletone = null;
 	private static PackageManager AppInfo = null;
 	private static Resources  ResInfo = null;
+	private static ActivityManager ActInfo = null;
 	
 	public static ProcessInfoQuery getInstance(Context context)
 	{
@@ -33,6 +38,7 @@ public class ProcessInfoQuery extends Thread
 			singletone = new ProcessInfoQuery();
             AppInfo = context.getPackageManager();
             ResInfo = context.getResources();
+            ActInfo = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
             singletone.start();
 		}
 		
@@ -52,7 +58,8 @@ public class ProcessInfoQuery extends Thread
     
 	public void doCacheInfo(int position)
 	{
-		ProcessInstance CacheInstance = ProcessCache.get(JNILibrary.GetProcessName(position));
+		int ProcessID = JNILibrary.GetProcessPID(position);
+		ProcessInstance CacheInstance = ProcessCache.get(JNILibrary.GetProcessName(ProcessID));
 		if(CacheInstance != null)
 			return;
 		
@@ -62,14 +69,13 @@ public class ProcessInfoQuery extends Thread
 			e.printStackTrace();
 		}
 		
-		QueryQueue.add(new WaitCache(JNILibrary.GetProcessName(position),
-				JNILibrary.GetProcessOwner(position), JNILibrary.GetProcessUID(position)));
+		QueryQueue.add(new WaitCache(JNILibrary.GetProcessName(ProcessID),
+				JNILibrary.GetProcessOwner(ProcessID), JNILibrary.GetProcessUID(ProcessID)));
 		QueryQueueLock.release();
 		
 		CacheInstance = new ProcessInstance();
-		CacheInstance.Name = JNILibrary.GetProcessName(position);
-		ProcessCache.put(JNILibrary.GetProcessName(position),
-					      CacheInstance);
+		CacheInstance.Name = JNILibrary.GetProcessName(ProcessID);
+		ProcessCache.put(JNILibrary.GetProcessName(ProcessID), CacheInstance);
 		
 		return;
 	}
@@ -147,8 +153,9 @@ public class ProcessInfoQuery extends Thread
 			PackageName = SearchObj.getName();
 		
 		// for system user
-		if(SearchObj.getOwner().contains("system") &&
-						SearchObj.getName().contains("system"))
+		if(SearchObj.getOwner().contains("system") && 
+						SearchObj.getName().contains("system") &&
+							!SearchObj.getName().contains("."))
 			PackageName = "android";
 		
 		try {  
@@ -165,7 +172,6 @@ public class ProcessInfoQuery extends Thread
 				{
 					if (subPackageName[PackagePtr] == null)
 						continue;
-					
 					try {  
 						appPackageInfo = AppInfo.getPackageInfo(subPackageName[PackagePtr], 0);
 						PackagePtr = subPackageName.length;
@@ -196,36 +202,33 @@ public class ProcessInfoQuery extends Thread
 		return true;
 	}
 	
-	public Boolean getExpaned(int position)
+	public Boolean getExpaned(int pid)
 	{
-		Boolean Flag = CacheExpaned.get(JNILibrary.GetProcessPID(position)+"");
+		Boolean Flag = CacheExpaned.get(pid+"");
 		if(Flag == null)
 			Flag = false;
 		
 		return Flag;
 	}
 	
-	public void setExpaned(int position, Boolean Flag)
+	public void setExpaned(int pid, Boolean Flag)
 	{
-//		ProcessInstance CacheInstance = ProcessCache.get(JNILibrary.GetProcessName(position));
-	//	CacheInstance.Expaned = Flag;
-		//ProcessCache.put(JNILibrary.GetProcessName(position), CacheInstance);
-		CacheExpaned.put(JNILibrary.GetProcessPID(position)+"", Flag);
+		CacheExpaned.put(pid+"", Flag);
 		return;
 	}
 	
-	public Boolean getSelected(int position)
+	public Boolean getSelected(int pid)
 	{
-		Boolean Flag = CacheSelected.get(JNILibrary.GetProcessPID(position)+"");
+		Boolean Flag = CacheSelected.get(pid+"");
 		if(Flag == null)
 			Flag = false;
 		
 		return Flag;
 	}
 	
-	public void setSelected(int position, Boolean Flag)
+	public void setSelected(int pid, Boolean Flag)
 	{
-		CacheSelected.put(JNILibrary.GetProcessPID(position)+"", Flag);
+		CacheSelected.put(pid+"", Flag);
 		return;
 	}
 	
@@ -250,103 +253,108 @@ public class ProcessInfoQuery extends Thread
 	}
 
 	
-	public String getPackageName(int position) 
+	public String getPackageName(int pid) 
 	{
-		return ProcessCache.get(JNILibrary.GetProcessName(position)).Name;
+		ProcessInstance Process = ProcessCache.get(JNILibrary.GetProcessName(pid));
+		if(Process != null)
+			return Process.Name;
+		else
+			return "";
 	}
 
-	public String getPacakge(int position)
+	public String getPacakge(int pid)
 	{
-		return ProcessCache.get(JNILibrary.GetProcessName(position)).Package;
+		ProcessInstance Process = ProcessCache.get(JNILibrary.GetProcessName(pid));
+		if(Process != null)
+			return Process.Package;
+		else
+			return "";
 	}
 	
-	public int getProcessPID(int position)
-	{
-		return JNILibrary.GetProcessPID(position);
-	}
-	
-	public String getProcessThreads(int position)
-	{
-		return JNILibrary.GetProcessThreads(position)+"";
-	}
-
-	public String getProcessLoad(int position)
-	{
-		return JNILibrary.GetProcessLoad(position)+"%";
-	}
-
-	public String getProcessMem(int position)
-	{
-		if(JNILibrary.GetProcessRSS(position) > 1024) 
-			return (JNILibrary.GetProcessRSS(position)/1024)+"M";
-		return JNILibrary.GetProcessRSS(position)+"K";
-	}
-	
-	
-	private StringBuilder appbuf = new StringBuilder();
-	public String getAppInfo(int position) {
+	public String getAppInfo(int pid) {
+		StringBuilder appbuf = new StringBuilder();
 		appbuf.setLength(0);
-		
-		if(JNILibrary.GetProcessRSS(position) > 1024) {
-			appbuf.append("\tProcess: ")
-				  .append(JNILibrary.GetProcessName(position))
-			      .append("\n\tMemory: ")
-				  .append(JNILibrary.GetProcessRSS(position)/1024)
-				  .append("M\t  Thread: ")
-				  .append(JNILibrary.GetProcessThreads(position))
-				  .append("\t  Load: ")
-				  .append(JNILibrary.GetProcessLoad(position))
-				  .append("%\n\tSTime: ")
-				  .append(JNILibrary.GetProcessSTime(position))
-				  .append("\t  UTime: ")
-				  .append(JNILibrary.GetProcessUTime(position))
-				  .append("\n\tUser: ")
-				  .append(JNILibrary.GetProcessOwner(position))
-				  .append("\t  Status: ");
+
+		appbuf.append("\t"+ResInfo.getString(R.string.process_detail_process)+": ")
+			  .append(JNILibrary.GetProcessName(pid))
+	          .append("\n\t"+ResInfo.getString(R.string.process_detail_memory)+": ");
+
+		if(JNILibrary.GetProcessRSS(pid) > 1024) {
+			appbuf.append(JNILibrary.GetProcessRSS(pid)/1024)
+				  .append('M');
 		}
 		else {
-			appbuf.append("\tProcess: ")
-				  .append(JNILibrary.GetProcessName(position))
-				  .append("\n\tMemory: ")
-				  .append(JNILibrary.GetProcessRSS(position))
-				  .append("K\t  Threads: ")
-				  .append(JNILibrary.GetProcessThreads(position))
-				  .append("\t  Load: ")
-				  .append(JNILibrary.GetProcessLoad(position))
-				  .append("%\n\tSTime: ")
-				  .append(JNILibrary.GetProcessSTime(position))
-				  .append("\t  UTime: ")
-				  .append(JNILibrary.GetProcessUTime(position))
-				  .append("\n\tUser: ")
-				  .append(JNILibrary.GetProcessOwner(position))
-				  .append("\t  Status: ");				  
+			appbuf.append(JNILibrary.GetProcessRSS(pid))
+				  .append('K');
 		}
 		
-		String Status = JNILibrary.GetProcessStatus(position).trim();
+		// get PSS
+		try {
+			int ProcessPID[] = new int[1];
+			ProcessPID[0] = pid;
+
+			Method getProcessInfo = ActivityManager.class.getMethod("getProcessMemoryInfo",new Class[] { int[].class });
+			Debug.MemoryInfo[] pMemoryInfo = (Debug.MemoryInfo[]) getProcessInfo.invoke(ActInfo, ProcessPID);
+	        
+			if(pMemoryInfo != null)
+	        {
+	        	int PSSMemory = pMemoryInfo[0].dalvikPss + pMemoryInfo[0].nativePss + pMemoryInfo[0].otherPss;
+
+	        	if(PSSMemory > 1024) {
+	        		appbuf.append(" (")
+	        			  .append(PSSMemory/1024)
+	        			  .append("M)");
+	        	}
+	        	else {
+	        		appbuf.append("(")
+	        			  .append(PSSMemory)
+	        			  .append("K)");
+	        	}
+	        }
+		} catch (Exception e) {}
+		 
+		appbuf.append("\t  "+ResInfo.getString(R.string.process_detail_thread)+": ")
+			  .append(JNILibrary.GetProcessThreads(pid))
+			  .append("\t  "+ResInfo.getString(R.string.process_detail_load)+": ")
+			  .append(JNILibrary.GetProcessLoad(pid))
+			  .append("%\n\t"+ResInfo.getString(R.string.process_detail_stime)+": ")
+			  .append(JNILibrary.GetProcessSTime(pid))
+			  .append("\t  "+ResInfo.getString(R.string.process_detail_utime)+": ")
+			  .append(JNILibrary.GetProcessUTime(pid))
+			  .append("\t  "+ResInfo.getString(R.string.process_detail_nice)+": ")
+			  .append(JNILibrary.GetProcessNice(pid))
+			  .append("\n\t"+ResInfo.getString(R.string.process_detail_user)+": ")
+			  .append(JNILibrary.GetProcessOwner(pid))
+			  .append("\t  "+ResInfo.getString(R.string.process_detail_status)+": ");				  
+		
+		String Status = JNILibrary.GetProcessStatus(pid).trim();
 		if(Status.compareTo("Z") == 0)
-			appbuf.append("Zombie");
+			appbuf.append(ResInfo.getString(R.string.process_status_zombie));
 		else if(Status.compareTo("S") == 0)
-			appbuf.append("Sleep");
+			appbuf.append(ResInfo.getString(R.string.process_status_sleep));
 		else if(Status.compareTo("R") == 0)
-			appbuf.append("Running");
+			appbuf.append(ResInfo.getString(R.string.process_status_running));
 		else if(Status.compareTo("D") == 0)
-			appbuf.append("Wait IO");
+			appbuf.append(ResInfo.getString(R.string.process_status_waitio));
 		else if(Status.compareTo("T") == 0)
-			appbuf.append("Stop");
+			appbuf.append(ResInfo.getString(R.string.process_status_stop));
 		else 
-			appbuf.append("Unknown");
+			appbuf.append(ResInfo.getString(R.string.process_status_unknown));
+
+		appbuf.append("\n\t"+ResInfo.getString(R.string.process_detail_time)+": ")
+		  	  .append(JNILibrary.GetProcessTime(pid));
 
 		return appbuf.toString();
 	}
 	
-	public Drawable getAppIcon(int position) 
+	public Drawable getAppIcon(int pid) 
 	{
-		return ProcessCache.get(JNILibrary.GetProcessName(position)).Icon;
+		return ProcessCache.get(JNILibrary.GetProcessName(pid)).Icon;
 	}
-	
+
 	private Drawable resizeImage(Drawable Icon) {
 
-		if(CompareFunc.getScreenSize() == 2)
+		if(CommonUtil.getScreenSize() == 2)
 		{
 			Bitmap BitmapOrg = Bitmap.createBitmap(60, 60, Bitmap.Config.ARGB_8888); 
 			Canvas BitmapCanvas = new Canvas(BitmapOrg);
@@ -354,7 +362,7 @@ public class ProcessInfoQuery extends Thread
 			Icon.draw(BitmapCanvas); 
 	        return new BitmapDrawable(BitmapOrg);
 		}
-		else if (CompareFunc.getScreenSize() == 0)
+		else if (CommonUtil.getScreenSize() == 0)
 		{
 			Bitmap BitmapOrg = Bitmap.createBitmap(10, 10, Bitmap.Config.ARGB_8888); 
 			Canvas BitmapCanvas = new Canvas(BitmapOrg);

@@ -4,11 +4,24 @@
     android:layout_height="wrap_content" 
     android:id="@+id/miscview"
     android:scrollbars="vertical">
-     
+    
 	<TableLayout 
   		android:layout_width="wrap_content"
   		android:layout_height="wrap_content"
   		android:stretchColumns="2" >
+
+		<TableRow android:layout_width="wrap_content"
+				  android:layout_height="wrap_content" >
+
+			<ImageView android:layout_width="wrap_content" 
+				   	   android:layout_height="wrap_content"
+				   	   android:src="@drawable/uptime" android:padding="10dip"/>
+				   	   
+	    	<TextView android:layout_width="fill_parent" 
+    				  android:layout_height="wrap_content"
+    				  android:id="@+id/uptimeText"
+    				  android:layout_span="2"/>
+    	</TableRow> 
 
 		<TableRow android:layout_width="wrap_content"
 				  android:layout_height="wrap_content" >
@@ -28,7 +41,7 @@
 					  android:layout_width="wrap_content" 
 					  android:layout_height="wrap_content"
 					  android:layout_span="5" 
-					  android:text="@string/loading_text"/>
+					  android:text="@string/message_loading"/>
 				</TableRow>
 
 				<TableRow android:layout_width="fill_parent"
@@ -103,7 +116,8 @@
 			<TextView android:id="@+id/powerText"
 			          android:layout_span="3"
 					  android:layout_width="wrap_content" 
-					  android:layout_height="wrap_content" android:text="@string/loading_text"/>
+					  android:layout_height="wrap_content" 
+					  android:text="@string/message_loading"/>
 		</TableRow>
 
 		<TableRow android:layout_width="wrap_content"
@@ -119,7 +133,8 @@
 			   	   
 			<TextView android:id="@+id/diskText"
 					  android:layout_width="wrap_content" 
-					  android:layout_height="wrap_content" android:text="@string/loading_text"/>
+					  android:layout_height="wrap_content" 
+					  android:text="@string/message_loading"/>
 			  
 		</TableRow>
 	</TableLayout>

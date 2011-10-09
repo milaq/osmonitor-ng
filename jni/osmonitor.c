@@ -17,7 +17,7 @@ void check_rooted()
 
 	if(!path || checkpath == 0)
 	{
-		if(lstat(SU_PATH, &s) < 0)
+		if(stat(SU_PATH, &s) < 0)
 			phone_rooted = 0;
 		else
 			phone_rooted = 1;
@@ -28,18 +28,19 @@ void check_rooted()
 		last = 0;
 
 		strncpy(checkpath, path, strlen(path));
-		for (check = 0; check < strlen(path); check++)
+		for (check = 0; check <= strlen(path); check++)
 		{
-			if(checkpath[check] == ':')
+			if(checkpath[check] == ':' || check == strlen(path))
 			{
 				checkpath[check] = '\x0';
 				memset(checkfile, 0, 256);
-				snprintf(checkfile, 256, "%s" , &checkpath[last], "/su");
-				if(lstat(checkfile, &s) == 0)
+				snprintf(checkfile, 256, "%s%s" , &checkpath[last], "/su");
+				if(stat(checkfile, &s) == 0)
 				{
 					phone_rooted = 1;
 					break;
 				}
+				last = check+1;
 			}
 		}
 	}
@@ -174,7 +175,7 @@ void *backgoundtask(void *threadid)
 		else if(update_misc == 1)
 		{
 			misc_dump_processor();
-			misc_dump_power();
+			//misc_dump_power();
 			misc_dump_filesystem();
 		}
 		else if(update_dmesg == 1)
@@ -354,35 +355,40 @@ static jlong Mem_GetBuffer(JNIEnv* env, jobject thiz)
 	return mem_get_buffers();
 }
 
-static jint Processor_GetMax(JNIEnv* env, jobject thiz)
+static jint Processor_GetNum(JNIEnv* env, jobject thiz)
 {
-	return misc_get_processor_cpumax();
+	return misc_get_processor_number();
 }
 
-static jint Processor_GetMin(JNIEnv* env, jobject thiz)
+static jint Processor_GetMax(JNIEnv* env, jobject thiz, jint num)
 {
-	return misc_get_processor_cpumin();
+	return misc_get_processor_cpumax(num);
 }
 
-static jint Processor_GetScalMax(JNIEnv* env, jobject thiz)
+static jint Processor_GetMin(JNIEnv* env, jobject thiz, jint num)
 {
-	return misc_get_processor_scalmax();
+	return misc_get_processor_cpumin(num);
 }
 
-static jint Processor_GetScalMin(JNIEnv* env, jobject thiz)
+static jint Processor_GetScalMax(JNIEnv* env, jobject thiz, jint num)
 {
-	return misc_get_processor_scalmin();
+	return misc_get_processor_scalmax(num);
 }
 
-static jint Processor_GetScalCur(JNIEnv* env, jobject thiz)
+static jint Processor_GetScalMin(JNIEnv* env, jobject thiz, jint num)
 {
-	return misc_get_processor_scalcur();
+	return misc_get_processor_scalmin(num);
 }
 
-static jstring Processor_GetScalGov( JNIEnv* env, jobject thiz)
+static jint Processor_GetScalCur(JNIEnv* env, jobject thiz, jint num)
+{
+	return misc_get_processor_scalcur(num);
+}
+
+static jstring Processor_GetScalGov( JNIEnv* env, jobject thiz, jint num)
 {
 	char buf[BUFFERSIZE];
-	misc_get_processor_scalgov(buf);
+	misc_get_processor_scalgov(num, buf);
 	return (*env)->NewStringUTF(env, buf);
 }
 
@@ -565,61 +571,73 @@ static jint PS_PID( JNIEnv* env, jobject thiz, jint position)
 	return retval;
 }
 
-static jint PS_UID( JNIEnv* env, jobject thiz, jint position)
+static jint PS_UID( JNIEnv* env, jobject thiz, jint pid)
 {
-	jint retval =  ps_get_uid(position);
+	jint retval =  ps_get_uid(pid);
 	return retval;
 }
 
-static jint PS_Load( JNIEnv* env, jobject thiz, jint position)
+static jint PS_Load( JNIEnv* env, jobject thiz, jint pid)
 {
-	jint retval = ps_get_load(position);
+	jint retval = ps_get_load(pid);
 	return retval;
 }
 
-static jlong PS_UTime( JNIEnv* env, jobject thiz, jint position)
+static jlong PS_UTime( JNIEnv* env, jobject thiz, jint pid)
 {
-	jlong retval = ps_get_utime(position);
+	jlong retval = ps_get_utime(pid);
 	return retval;
 }
 
-static jlong PS_STime( JNIEnv* env, jobject thiz, jint position)
+static jlong PS_STime( JNIEnv* env, jobject thiz, jint pid)
 {
-	jlong retval = ps_get_stime(position);
+	jlong retval = ps_get_stime(pid);
 	return retval;
 }
 
-
-static jlong PS_RSS( JNIEnv* env, jobject thiz, jint position)
-{
-	jlong retval = ps_get_rss(position);
-	return retval;
-}
-
-static jint PS_THREAD( JNIEnv* env, jobject thiz, jint position)
-{
-	jint retval =  ps_get_threadnum(position);
-	return retval;
-}
-
-static jstring PS_Name( JNIEnv* env, jobject thiz, jint position)
+static jstring PS_Time( JNIEnv* env, jobject thiz, jint pid)
 {
 	char buf[BUFFERSIZE];
-	ps_get_name(position, buf);
+	ps_get_time(pid, buf);
 	return (*env)->NewStringUTF(env, buf);
 }
 
-static jstring PS_Owner( JNIEnv* env, jobject thiz, jint position)
+static jlong PS_RSS( JNIEnv* env, jobject thiz, jint pid)
+{
+	jlong retval = ps_get_rss(pid);
+	return retval;
+}
+
+static jlong PS_Nice( JNIEnv* env, jobject thiz, jint pid)
+{
+	jlong retval = ps_get_nice(pid);
+	return retval;
+}
+
+static jint PS_THREAD( JNIEnv* env, jobject thiz, jint pid)
+{
+	jint retval =  ps_get_threadnum(pid);
+	return retval;
+}
+
+static jstring PS_Name( JNIEnv* env, jobject thiz, jint pid)
 {
 	char buf[BUFFERSIZE];
-	ps_get_owner(position, buf);
+	ps_get_name(pid, buf);
 	return (*env)->NewStringUTF(env, buf);
 }
 
-static jstring PS_Status( JNIEnv* env, jobject thiz, jint position)
+static jstring PS_Owner( JNIEnv* env, jobject thiz, jint pid)
 {
 	char buf[BUFFERSIZE];
-	ps_get_status(position, buf);
+	ps_get_owner(pid, buf);
+	return (*env)->NewStringUTF(env, buf);
+}
+
+static jstring PS_Status( JNIEnv* env, jobject thiz, jint pid)
+{
+	char buf[BUFFERSIZE];
+	ps_get_status(pid, buf);
 	return (*env)->NewStringUTF(env, buf);
 }
 
@@ -781,6 +799,12 @@ static jint Net_Count( JNIEnv* env, jobject thiz)
 }
 
 /* dmesg */
+static jint DMesg_Truncate( JNIEnv* env, jobject thiz)
+{
+	dmesg_list_truncate();
+	return 1;
+}
+
 static jint DMesg_Count( JNIEnv* env, jobject thiz)
 {
 	return dmesg_list_count();
@@ -887,6 +911,12 @@ static jstring DMesg_GetAll( JNIEnv* env, jobject thiz)
 }
 
 /* logcat */
+static jint Logcat_Truncate( JNIEnv* env, jobject thiz)
+{
+	logcat_list_truncate();
+	return 1;
+}
+
 static jint Logcat_Count( JNIEnv* env, jobject thiz)
 {
 	return logcat_list_count();
@@ -999,13 +1029,14 @@ static JNINativeMethod gMethods[] = {
 		{ "GetCPUUsageValue", "()I", CPU_GetUsageValue},
 
 		/* Processor */
-		{ "GetProcessorMax", "()I", Processor_GetMax },
-		{ "GetProcessorMin", "()I", Processor_GetMin },
-		{ "GetProcessorScalMax", "()I", Processor_GetScalMax },
-		{ "GetProcessorScalMin", "()I", Processor_GetScalMin },
-		{ "GetProcessorScalCur", "()I", Processor_GetScalCur },
+		{ "GetProcessorNum", "()I", Processor_GetNum },
+		{ "GetProcessorMax", "(I)I", Processor_GetMax },
+		{ "GetProcessorMin", "(I)I", Processor_GetMin },
+		{ "GetProcessorScalMax", "(I)I", Processor_GetScalMax },
+		{ "GetProcessorScalMin", "(I)I", Processor_GetScalMin },
+		{ "GetProcessorScalCur", "(I)I", Processor_GetScalCur },
 		{ "GetProcessorOMAPTemp", "()I", Processor_GetOMAPTemp },
-		{ "GetProcessorScalGov", "()Ljava/lang/String;", Processor_GetScalGov },
+		{ "GetProcessorScalGov", "(I)Ljava/lang/String;", Processor_GetScalGov },
 
 		/* Memory */
 		{ "GetMemTotal", "()J", Mem_GetTotal},
@@ -1048,7 +1079,9 @@ static JNINativeMethod gMethods[] = {
 		{ "GetProcessLoad", "(I)I", PS_Load},
 		{ "GetProcessSTime", "(I)J", PS_STime},
 		{ "GetProcessUTime", "(I)J", PS_UTime},
+		{ "GetProcessTime", "(I)Ljava/lang/String;", PS_Time},
 		{ "GetProcessRSS", "(I)J", PS_RSS},
+		{ "GetProcessNice", "(I)J", PS_Nice},
 		{ "GetProcessThreads", "(I)I", PS_THREAD},
 		{ "GetProcessName", "(I)Ljava/lang/String;", PS_Name},
 		{ "GetProcessOwner", "(I)Ljava/lang/String;", PS_Owner},
@@ -1082,6 +1115,7 @@ static JNINativeMethod gMethods[] = {
 		{ "GetNetworkUID", "(I)I", Net_GetUID},
 
 		/* DMesg */
+		{ "TruncateDebugMessage", "()I", DMesg_Truncate},
 		{ "GetDebugMessageCounts", "()I", DMesg_Count},
 		{ "GetDebugMessageLevel", "(I)Ljava/lang/String;", DMesg_GetLevel},
 		{ "GetDebugMessageTime", "(I)Ljava/lang/String;", DMesg_GetTime},
@@ -1092,6 +1126,7 @@ static JNINativeMethod gMethods[] = {
 		{ "GetDebugMessage", "()Ljava/lang/String;", DMesg_GetAll},
 
 		/* Logcat */
+		{ "TruncateLogcat", "()I", Logcat_Truncate},
 		{ "GetLogcatCounts", "()I", Logcat_Count},
 		{ "GetLogcatSize", "()I", Logcat_GetLogSize},
 		{ "GetLogcatCurrentSize", "()I", Logcat_GetLogCurrentSize},

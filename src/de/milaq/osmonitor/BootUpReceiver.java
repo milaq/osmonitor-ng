@@ -15,6 +15,11 @@ public class BootUpReceiver extends BroadcastReceiver{
 	@Override
 	public void onReceive(Context context, Intent intent) {
 
+		// get cpu info
+		JNILibrary.doTaskStart(JNILibrary.doTaskMisc);
+    	JNILibrary.doDataRefresh();
+    	JNILibrary.doTaskStop();
+
 		// load settings
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(context);
 		
@@ -31,20 +36,26 @@ public class BootUpReceiver extends BroadcastReceiver{
         	
         	if(!CPUGov.equals(""))
         	{
-        		SetCPUCmd = "echo "+CPUGov+
-        		            " > /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor"+"\n";
+        		for(int CPUNum = 0; CPUNum < JNILibrary.GetProcessorNum(); CPUNum++)
+        		{
+        			SetCPUCmd += "echo "+CPUGov+
+        						 " > /sys/devices/system/cpu/cpu"+CPUNum+"/cpufreq/scaling_governor"+"\n";
+        		}
         	}
         	
         	String CPUFreq[] = settings.getString(Preferences.PREF_SETCPURANGE, ";").split(";");
         	if(CPUFreq.length == 2)
         	{
-            	SetCPUCmd += "echo "+CPUFreq[0]+
-							 " > /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq"+"\n";
+        		for(int CPUNum = 0; CPUNum < JNILibrary.GetProcessorNum(); CPUNum++)
+        		{
+        			SetCPUCmd += "echo "+CPUFreq[0]+
+        						 " > /sys/devices/system/cpu/cpu"+CPUNum+"/cpufreq/scaling_min_freq"+"\n";
 
-            	SetCPUCmd += "echo "+CPUFreq[1]+
-				             " > /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"+"\n";
+        			SetCPUCmd += "echo "+CPUFreq[1]+
+        						 " > /sys/devices/system/cpu/cpu"+CPUNum+"/cpufreq/scaling_max_freq"+"\n";
+        		}		
         	}
-    		JNILibrary.execCommand(SetCPUCmd);
+    		CommonUtil.execCommand(SetCPUCmd);
         }
 	}
 }

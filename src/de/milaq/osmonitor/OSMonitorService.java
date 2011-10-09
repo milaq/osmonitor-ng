@@ -77,14 +77,14 @@ public class OSMonitorService extends Service
 				else 
 					serviceNotify.iconLevel = 6+useColor*100;
 				
-				String maininfo = "CPU: "+cpuLoad+"% , "
-									 +"MEM:"+MemoryFormat.format(JNILibrary.GetMemBuffer()+JNILibrary.GetMemCached()+JNILibrary.GetMemFree())+ "K"; 
+				String maininfo = serviceContext.getResources().getString(R.string.process_cpuusage)+" "+cpuLoad+"% , "
+									 +serviceContext.getResources().getString(R.string.process_mem)+":"+MemoryFormat.format(JNILibrary.GetMemBuffer()+JNILibrary.GetMemCached()+JNILibrary.GetMemFree())+ "K"; 
 
 				String extendinfo = "";
 				if(useCelsius)
-					extendinfo = " Battery: "+battLevel+"%"+" ("+temperature/10+"°C)";
+					extendinfo = serviceContext.getResources().getString(R.string.battery_text)+": "+battLevel+"%"+" ("+temperature/10+"°C)";
 				else
-					extendinfo = " Battery: "+battLevel+"%"+" ("+((int)temperature/10*9/5+32)+"°F)";
+					extendinfo = serviceContext.getResources().getString(R.string.battery_text)+": "+battLevel+"%"+" ("+((int)temperature/10*9/5+32)+"°F)";
 
 
 				
@@ -265,11 +265,11 @@ public class OSMonitorService extends Service
 	    
 	    serviceContext = this; 
 	    CharSequence tickerText = getResources().getString(R.string.bar_title);
-	    CharSequence contentText =  getResources().getString(R.string.notify_text);
+	    CharSequence contentText =  getResources().getString(R.string.bar_text);
 	    CharSequence contentTitle = getResources().getString(R.string.app_title);
 	    
 	    serviceNotify = new Notification(thisIcon, tickerText, thisTime);
-	    serviceNotify.flags |= Notification.FLAG_NO_CLEAR|Notification.FLAG_ONGOING_EVENT;
+	    serviceNotify.flags |= Notification.FLAG_NO_CLEAR|Notification.FLAG_ONGOING_EVENT|Notification.FLAG_ONLY_ALERT_ONCE;
 
 	    //RemoteViews contentView = new RemoteViews(getPackageName(), R.layout.notificationlayout);
     	//contentView.setImageViewResource(R.id.image, R.drawable.appicon);

@@ -42,7 +42,7 @@
         <!-- Here is the view to show if the list is emtpy -->
         <TextView android:id="@+id/debugempty"
             android:layout_width="fill_parent" 
-            android:layout_height="fill_parent" android:text="@string/loading_text"/>
+            android:layout_height="fill_parent" android:text="@string/message_loading"/>
             
     </FrameLayout>        
     <TableLayout

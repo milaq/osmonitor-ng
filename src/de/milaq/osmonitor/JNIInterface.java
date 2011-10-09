@@ -1,13 +1,5 @@
 package de.milaq.osmonitor;
 
-import java.io.DataOutputStream;
-import java.io.IOException;
-
-import android.app.ActivityManager;
-import android.os.Handler;
-import android.os.Message;
-import android.content.Context;
-
 public class JNIInterface
 { 
 	private static JNIInterface singletone = null;
@@ -17,7 +9,13 @@ public class JNIInterface
 	{
 		if(singletone == null) 
 		{
-	        System.loadLibrary("osmonitor");
+			try {
+				System.loadLibrary("osmonitor");
+			} 
+			catch (UnsatisfiedLinkError e)
+			{ 
+				android.os.Process.killProcess(android.os.Process.myPid());
+			}
 			singletone = new JNIInterface();
 		}
 		 
@@ -48,14 +46,15 @@ public class JNIInterface
     public native int GetCPUUsageValue();
     
     /* Processor */
-    public native int GetProcessorMax();
-    public native int GetProcessorMin();
-    public native int GetProcessorScalMax();
-    public native int GetProcessorScalMin();
-    public native int GetProcessorScalCur();
+    public native int GetProcessorNum();
+    public native int GetProcessorMax(int num);
+    public native int GetProcessorMin(int num);
+    public native int GetProcessorScalMax(int num);
+    public native int GetProcessorScalMin(int num);
+    public native int GetProcessorScalCur(int num);
     public native int GetProcessorOMAPTemp();
-    public native String GetProcessorScalGov();
-      
+    public native String GetProcessorScalGov(int num);
+       
     /* Memory */
     public native long GetMemTotal();
     public native long GetMemFree();
@@ -93,7 +92,7 @@ public class JNIInterface
 	public final int doSortMem = 3; 
 	public final int doSortThreads = 4; 
 	public final int doSortName = 5;
-	 
+	              
 	public final int doOrderASC = 0; 
 	public final int doOrderDESC = 1; 
 
@@ -103,15 +102,17 @@ public class JNIInterface
     public native int SetProcessOrder(int Order);
     public native int GetProcessCounts();
     public native int GetProcessPID(int position);
-    public native int GetProcessUID(int position);
-    public native int GetProcessLoad(int position);
-    public native long GetProcessUTime(int position);
-    public native long GetProcessSTime(int position);
-    public native int GetProcessThreads(int position);
-    public native long GetProcessRSS(int position);
-    public native String GetProcessName(int position);
-    public native String GetProcessOwner(int position);
-    public native String GetProcessStatus(int position);
+    public native int GetProcessUID(int pid);
+    public native int GetProcessLoad(int pid);
+    public native long GetProcessUTime(int pid);
+    public native long GetProcessSTime(int pid);
+    public native String GetProcessTime(int pid);
+    public native int GetProcessThreads(int pid);
+    public native long GetProcessRSS(int pid);
+    public native long GetProcessNice(int pid);
+    public native String GetProcessName(int pid);
+    public native String GetProcessOwner(int pid);
+    public native String GetProcessStatus(int pid);
     public native String GetProcessNamebyUID(int uid);
 
     public native int doInterfaceNext();
@@ -138,7 +139,7 @@ public class JNIInterface
     public native String GetNetworkStatus(int position);
     public native int GetNetworkUID(int position);
 
-    
+     
 	/*
 	0: KERN_EMERG
 	1: KERN_ALERT
@@ -157,7 +158,8 @@ public class JNIInterface
 	public final int doDMesgINFO = 6; 
 	public final int doDMesgDEBUG = 7; 
 	public final int doDMesgNONE = 8; 
-
+ 
+	public native int TruncateDebugMessage();
 	public native int GetDebugMessageCounts();
 	public native String GetDebugMessageTime(int position);
 	public native String GetDebugMessageLevel(int position);
@@ -175,6 +177,7 @@ public class JNIInterface
     public final int doLogcatERROR = 6;
     public final int doLogcatFATAL = 7;
     
+	public native int TruncateLogcat();
 	public native int GetLogcatCounts();
 	public native int GetLogcatSize();
 	public native int GetLogcatCurrentSize();
@@ -188,46 +191,5 @@ public class JNIInterface
 	public native int SetLogcatPID(int value);
 	public native int SetLogcatLevel(int value);
 	public native int SetLogcatMessage(String filter);
-	
-    public void execCommand(String command) {
-    	try {
-    		Process shProc = Runtime.getRuntime().exec("su");
-    		DataOutputStream InputCmd = new DataOutputStream(shProc.getOutputStream());
-    	
-    		InputCmd.writeBytes(command);
-
-    		// Close the terminal
-    		InputCmd.writeBytes("exit\n");
-    		InputCmd.flush();
-    		InputCmd.close();
-    	
-    		try {
-    			shProc.waitFor();
-    		} catch (InterruptedException e) { };
-    	} catch (IOException e) {}
-    }    
-
-    private Handler EndHelper = new Handler() 
-    {
-    	public void handleMessage(Message msg)
-    	{
-    		android.os.Process.killProcess(android.os.Process.myPid());
-    	}
-    	
-    }; 
-    
-    public void killSelf(Context target)
-    {
-    	if(CompareFunc.getSDKVersion() <= 7)
-    	{
-           	((ActivityManager) target.getSystemService(Context.ACTIVITY_SERVICE))
-           									.restartPackage("de.milaq.osmonitor");
-    	}
-    	else
-    	{
-    		EndHelper.sendEmptyMessageDelayed(0, 500);
-
-    	}
-    }
 }
 

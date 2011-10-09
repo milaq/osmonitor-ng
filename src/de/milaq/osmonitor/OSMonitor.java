@@ -47,7 +47,7 @@ public class OSMonitor extends TabActivity
         		startService(new Intent(this, OSMonitorService.class));
         
         // detect screen size
-        CompareFunc.detectScreen(this);
+        CommonUtil.detectScreen(this);
 
         // create view
     	super.onCreate(savedInstanceState);
@@ -56,7 +56,7 @@ public class OSMonitor extends TabActivity
         // set title
         this.setTitle(R.string.app_title);
         
-        
+         
         // create tab
         TabHost mTabHost = getTabHost();
                  

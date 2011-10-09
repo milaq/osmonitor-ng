@@ -1,21 +1,4 @@
-/*
- * Copyright (C) 2007 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
- 
 package de.milaq.osmonitor.processes;
-
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -37,6 +20,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
+import android.webkit.WebView;
 import android.widget.ListView;
 import android.view.ContextMenu;
 import android.view.Gravity;
@@ -48,7 +32,6 @@ import android.view.ViewGroup;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.view.View.OnClickListener;
 import android.view.View.OnTouchListener;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -58,7 +41,6 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.AbsListView.OnScrollListener;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
@@ -67,55 +49,53 @@ import de.milaq.osmonitor.*;
 import de.milaq.osmonitor.messages.DebugBox;
 import de.milaq.osmonitor.preferences.Preferences;
 
-public class ProcessList extends ListActivity implements OnGestureListener, OnTouchListener,  ListView.OnScrollListener
+public class ProcessList extends ListActivity implements OnGestureListener, OnTouchListener
 {
-	private boolean mBusy = false;
-	private static ProcessListAdapter UpdateInterface = null;
-	private static ProcessList Self = null;
-	private static JNIInterface JNILibrary = JNIInterface.getInstance();
-	private static int OrderBy = JNILibrary.doSortPID;
-	
+	// JNILibrary Interface
+	private JNIInterface JNILibrary = JNIInterface.getInstance();
+
+	// ProcessInfoQuery Object 
 	private ProcessInfoQuery ProcessInfo = null;
 	 
-	// TextView
-	private static TextView CPUUsage = null;
-	private static TextView RunProcess = null;
-	private static TextView MemTotal = null;
-	private static TextView MemFree = null;
+	// ProcessList Object
+	private ProcessListAdapter UpdateInterface = null;
+	 
+	// View Statistics TextView
+	private TextView mCPUUsageView = null;
+	private TextView mProcessCountView = null;
+	private TextView mMemoryTotalView = null;
+	private TextView mMemoryFreeView = null;
 
 	private static DecimalFormat MemoryFormat = new DecimalFormat(",000");
 
 	// Short & Click
-	private static int longClick = 2;
-	private static int shortClick = 3;
-	private static boolean shortTOlong = false;
-	private static boolean longTOshort = false;
+	private int longClick = 2;
+	private int shortClick = 3;
+	private boolean shortTOlong = false;
+	private boolean longTOshort = false;
 	
 	// Selected item
-	private static int selectedPosition = 0;
-	private static String selectedPackageName = null;
-	private static int selectedPackagePID = 0;
+	private int selectedPosition = 0;
+	private String selectedPackageName = null;
+	private int selectedPackagePID = 0;
 	
 	// MultiSelect
-	private static CheckBox MultiSelect = null;
-	private static Button MultiKill = null;
+	private CheckBox MultiSelect = null;
+	private Button MultiKill = null;
 
 	// Freeze
-	private static CheckBox Freeze = null;
-	private static boolean FreezeIt =  false;
-	private static boolean FreezeTask = false;
+	private CheckBox Freeze = null;
+	private boolean FreezeIt =  false;
+	private boolean FreezeTask = false;
 	
 	// Root
-	private static boolean Rooted = false;
-	
-	// Slow Adapter
-	private static boolean SlowAdapter = false;
+	private boolean Rooted = false;
 	
 	// Gesture
 	private GestureDetector gestureScanner = new GestureDetector(this);;
 	
-	private static boolean GestureLong = false;
-	private static boolean GestureSingleTap = false;
+	private boolean GestureLong = false;
+	private boolean GestureSingleTap = false;
 	
 	@Override
 	public boolean onTouchEvent(MotionEvent me)
@@ -132,15 +112,34 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 	@Override
 	public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY)
 	{
-		GestureLong = false;
-
-		return true;
+		/**
+		 * dont fling tabs here - it's annoying
+		**/
+//		try {
+//			if (Math.abs(e1.getY() - e2.getY()) > CommonUtil.SWIPE_MAX_OFF_PATH)
+//				return false;
+//			else if (e1.getX() - e2.getX() > CommonUtil.SWIPE_MIN_DISTANCE && 
+//						Math.abs(velocityX) > CommonUtil.SWIPE_THRESHOLD_VELOCITY) 
+//				((TabActivity) this.getParent()).getTabHost().setCurrentTab(1);
+//			else if (e2.getX() - e1.getX() > CommonUtil.SWIPE_MIN_DISTANCE &&
+//						Math.abs(velocityX) > CommonUtil.SWIPE_THRESHOLD_VELOCITY) 
+//				((TabActivity) this.getParent()).getTabHost().setCurrentTab(4);
+//			else
+//				return false;
+//		} catch (Exception e) {
+//			// nothing
+//		}
+//
+//		GestureLong = false;
+//
+//		return true;
+		
+		return false;
 	}
 	
 	@Override
 	public void onLongPress(MotionEvent e)
 	{
-		//performLongClick();
 		GestureLong = true;
 		return;
 	}
@@ -166,6 +165,14 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
 	@Override
 	public boolean onTouch(View v, MotionEvent event) {
+		
+		// avoid exception - https://review.source.android.com/#/c/21318/
+		try {
+			event.getY();
+		}
+		catch (Exception e) { 
+			return false;
+		}
 
 		GestureSingleTap = false;
 		
@@ -191,15 +198,15 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 		public void run() {
 
      		if(JNILibrary.doDataLoad() == 1) {
-     			CPUUsage.setText(JNILibrary.GetCPUUsage());
-    	     	RunProcess.setText(JNILibrary.GetProcessCounts()+"");
-    	     	MemTotal.setText(MemoryFormat.format(JNILibrary.GetMemTotal())+ "K");
-    	     	MemFree.setText(MemoryFormat.format(JNILibrary.GetMemBuffer()
-    	     					+JNILibrary.GetMemCached()+JNILibrary.GetMemFree())+ "K");
+     			mCPUUsageView.setText(JNILibrary.GetCPUUsage());
+    	     	mProcessCountView.setText(JNILibrary.GetProcessCounts()+"");
+    	     	mMemoryTotalView.setText(MemoryFormat.format(JNILibrary.GetMemTotal())+ "K");
+    	     	mMemoryFreeView.setText(MemoryFormat.format(JNILibrary.GetMemBuffer()
+    	     					        +JNILibrary.GetMemCached()+JNILibrary.GetMemFree())+ "K");
     	     	
     	     	
-    	     	Self.onRefresh();
-   	     	
+    	     	JNILibrary.doDataSwap(); 
+    	     	UpdateInterface.notifyDataSetChanged();
      		}
      		else
      		{
@@ -211,7 +218,7 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
     					FreezeTask = true;
     				}
     				else
-    	     			CPUUsage.setText(JNILibrary.GetCPUUsage());
+    	     			mCPUUsageView.setText(JNILibrary.GetCPUUsage());
     			}
     			else
     			{
@@ -224,39 +231,33 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
      		}
 
-	        uiHandler.postDelayed(this, 50);
+	        uiHandler.postDelayed(this, 500);
 		}
 	};   
 	
 	private Handler uiHandler = new Handler();
-	private ActivityManager ActivityMan = null;
 
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         
-        gestureScanner = new GestureDetector(this);
-        
         // Use a custom layout file
         setContentView(R.layout.processlayout);
 
-        CPUUsage = (TextView) findViewById(R.id.CPUUsage);
-        RunProcess = (TextView) findViewById(R.id.RunProcessText);
-        MemTotal = (TextView) findViewById(R.id.MemTotalText);
-        MemFree = (TextView) findViewById(R.id.MemFreeText);
+        mCPUUsageView = (TextView) findViewById(R.id.CPUUsage);
+        mMemoryTotalView = (TextView) findViewById(R.id.MemTotalText);
+        mMemoryFreeView = (TextView) findViewById(R.id.MemFreeText);
+        mProcessCountView = (TextView) findViewById(R.id.RunProcessText);
         
         // Tell the list view which view to display when the list is empty
         getListView().setEmptyView(findViewById(R.id.empty));
 
         // Use our own list adapter
-        Self = this;
-        Self.getListView().setOnTouchListener(this);
-        setListAdapter(new ProcessListAdapter(this));
+        getListView().setOnTouchListener(this);
+        setListAdapter(new ProcessListAdapter());
         UpdateInterface = (ProcessListAdapter) getListAdapter();
         ProcessInfo = ProcessInfoQuery.getInstance(this);
-        ActivityMan = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-        getListView().setOnScrollListener(this);
         
         // MultiKill
         MultiKill = (Button) findViewById(R.id.MultiKill);
@@ -265,6 +266,7 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
            		public void onClick(View v) {
            			
            			String KillCmd = ""; 
+           			ActivityManager ActivityMan = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
            			ArrayList<String> KillList = ProcessInfo.getSelected();
            			for(String pid:KillList)
            			{
@@ -279,29 +281,24 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
            	   	        }
            	   	        else
            	   	        {
-           	   	        	for(int i =0; i < JNILibrary.GetProcessCounts(); i++)
-           	   	        	{
-           	   	        		if(JNILibrary.GetProcessPID(i) == tPID)
-           	   	        		{
-           	   	        			android.os.Process.killProcess(tPID);
-           	   	        			ActivityMan.restartPackage(JNILibrary.GetProcessName(i));
-           	   	        			break;
-           	   	        		}
-           	   	        	}
+     	   	        		android.os.Process.killProcess(tPID);
+       	   	        		ActivityMan.restartPackage(JNILibrary.GetProcessName(tPID));
            	   	        }
            			}
            			
            			if(Rooted)
-           				JNILibrary.execCommand(KillCmd+"\n");
+           				CommonUtil.execCommand(KillCmd+"\n");
 
          	        ProcessInfo.clearSelected();
 
          	        JNILibrary.doDataRefresh();
          	        
          	        UpdateInterface.notifyDataSetChanged();
-         	        
-           			Toast.makeText(Self, "Kill "+KillList.size()+" Process..",
-           													Toast.LENGTH_SHORT).show();
+
+         	        // Display message
+         	        String KillMsg = getResources().getString(R.string.process_killmsg);
+         	        Toast.makeText(getApplication(), KillMsg.replace("$COUNT$", KillList.size()+"") ,
+           									Toast.LENGTH_SHORT).show();
     			}
            	}
         );
@@ -312,18 +309,14 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	new OnClickListener(){
         		public void onClick(View v) {
         			if(FreezeIt)
-        			{
         				FreezeIt = false;
-        			}
         			else
-        			{
         				FreezeIt = true;
-        			}
 				}
         	}
         );
         
-        // Multi-Select
+        // MultiSelect
         MultiSelect = (CheckBox) findViewById(R.id.MultiSelect);
         MultiSelect.setOnCheckedChangeListener(
         	new CompoundButton.OnCheckedChangeListener() {
@@ -343,46 +336,78 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         		}
         	}
         );
+        
+        // Change Order
+        TextView OrderBy =(TextView) findViewById(R.id.OrderType) ;
+        OrderBy.setOnClickListener(
+          	new OnClickListener(){
+               	
+          		public void onClick(View v) {
+          		    String[] Sortby = getResources().getStringArray(R.array.entries_list_sort);
+
+          		 	AlertDialog.Builder builder = new AlertDialog.Builder(ProcessList.this);
+           	    	//builder.setTitle(getApplication().getResources().getString(R.string.pref_sortbytitle_text));
+           	    	builder.setSingleChoiceItems(Sortby, (int) UpdateInterface.OrderBy-1, new DialogInterface.OnClickListener(){
+
+           	    		@Override
+           	    		public void onClick(DialogInterface dialog, int which) {
+           	    			JNILibrary.SetProcessSort(which+1);
+           	    	        
+           	    			// change display
+           	    	        TextView OrderType = (TextView) findViewById(R.id.OrderType);
+           	    	        
+           	    	        switch(which+1)
+           	    	        {
+           	    	        case 1:
+           	    	        case 2:
+           	    	        case 5:
+           	    	        	OrderType.setText(getResources().getString(R.string.process_load));
+           	    	        	break;
+           	    	        case 3:
+           	    	        	OrderType.setText(getResources().getString(R.string.process_mem));
+           	    	        	break; 
+           	    	        case 4:
+           	    	        	OrderType.setText(getResources().getString(R.string.process_thread));
+           	    	        	break;
+           	    	        }
+           	    	        
+           	    	        UpdateInterface.OrderBy = which+1;
+           	    	        
+           	    			dialog.dismiss();
+           	    		}
+
+           	    	});
+           	    	builder.show();   	    	               		
+          		}
+          	}        		
+    	);
     
         // restore
         registerForContextMenu(getListView());
     }
     
-
-	public void onRefresh()
-	{
-		JNILibrary.doDataSwap(); 
-		UpdateInterface.notifyDataSetChanged();
-	}
-	
 	private void restorePrefs()
     {
 		boolean ExcludeSystem = false;
 		boolean SortIn = false;
+		int OrderBy = 0;
 		int Algorithm = 1;
 
 		// load settings
 		SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(this);
 
 		try {
-
 			longClick = Integer.parseInt(settings.getString(Preferences.PREF_LONGBEHAVIOR, "2"));
 			shortClick = Integer.parseInt(settings.getString(Preferences.PREF_SHORTBEHAVIOR, "3"));
-
 			JNILibrary.doDataTime(Integer.parseInt(settings.getString(Preferences.PREF_UPDATE, "2")));
-
-			OrderBy =  Integer.parseInt(settings.getString(Preferences.PREF_ORDER, "1"));
-			
-			Algorithm = Integer.parseInt(settings.getString(Preferences.PREF_ALGORITHM, "1"));
-		
+			OrderBy =  Integer.parseInt(settings.getString(Preferences.PREF_ORDER, "2"));
 		} catch(Exception e) {}
 
-	    SortIn = settings.getBoolean(Preferences.PREF_SORT, false);
-	    ExcludeSystem = settings.getBoolean(Preferences.PREF_EXCLUDE, false);
+	    SortIn = settings.getBoolean(Preferences.PREF_SORT, true);
+	    ExcludeSystem = settings.getBoolean(Preferences.PREF_EXCLUDE, true);
 	    
 	    // change options
    		JNILibrary.SetProcessSort(OrderBy);
-   		
    		JNILibrary.SetProcessAlgorithm(Algorithm);
    		
         if(ExcludeSystem)
@@ -391,9 +416,9 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	JNILibrary.SetProcessFilter(0);
         
         if(SortIn)
-        	JNILibrary.SetProcessOrder(1);
-        else 
         	JNILibrary.SetProcessOrder(0);
+        else 
+        	JNILibrary.SetProcessOrder(1);
         
         // change display
         TextView OrderType = (TextView) findViewById(R.id.OrderType);
@@ -403,18 +428,19 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         case 1:
         case 2:
         case 5:
-        	OrderType.setText(getResources().getString(R.string.load_text));
+        	OrderType.setText(getResources().getString(R.string.process_load));
         	break;
         case 3:
-        	OrderType.setText(getResources().getString(R.string.mem_text));
+        	OrderType.setText(getResources().getString(R.string.process_mem));
         	break;
         case 4:
-        	OrderType.setText(getResources().getString(R.string.thread_text));
+        	OrderType.setText(getResources().getString(R.string.process_thread));
         	break;
         }
         
         UpdateInterface.OrderBy = OrderBy;
         
+        // Display extra area
     	TableLayout Msv = (TableLayout) findViewById(R.id.MultiSelectView);
         if(settings.getBoolean(Preferences.PREF_HIDEMULTISELECT, false))
         	Msv.setVisibility(View.GONE);
@@ -435,37 +461,38 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
         // Root
 		Rooted = settings.getBoolean(Preferences.PREF_ROOTED, false);
-		
-		// Slow Adapter
-		SlowAdapter = settings.getBoolean(Preferences.PREF_SLOWADAPTER, false);
-		
-
     }
 
     public boolean onCreateOptionsMenu(Menu optionMenu) 
     {
      	super.onCreateOptionsMenu(optionMenu);
-     	optionMenu.add(0, 1, 0, getResources().getString(R.string.options_text));
-       	optionMenu.add(0, 4, 0, getResources().getString(R.string.aboutoption_text));
-       	optionMenu.add(0, 5, 0, getResources().getString(R.string.forceexit_text));
-       	
-        
+     	optionMenu.add(0, 1, 0, getResources().getString(R.string.menu_options));
+       	optionMenu.add(0, 4, 0, getResources().getString(R.string.menu_help));
+       	optionMenu.add(0, 5, 0, getResources().getString(R.string.menu_forceexit));
     	return true;
     }
+    
+    
     @Override
     protected Dialog onCreateDialog(int id) 
     {
     	switch (id)
     	{
     	case 0:
-        	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.appicon)
-			   .setTitle(R.string.app_name)
-			   .setMessage(R.string.about_text)
-			   .setPositiveButton(R.string.aboutbtn_text,
+    		AlertDialog.Builder HelpWindows = new AlertDialog.Builder(this);
+    		HelpWindows.setTitle(R.string.app_name);
+			HelpWindows.setMessage(R.string.help_info);
+			HelpWindows.setPositiveButton(R.string.button_close,
 			   new DialogInterface.OnClickListener() {
-				   public void onClick(DialogInterface dialog, int whichButton) { } })
-			   .create();
+				   public void onClick(DialogInterface dialog, int whichButton) { }
+				}
+			);
+
+   	        WebView HelpView = new WebView(this);
+            HelpView.loadUrl("http://wiki.android-os-monitor.googlecode.com/hg/phonehelp.html?r=b1c196ee43855882e59ad5b015b953d62c95729d");
+            HelpWindows.setView(HelpView);
+
+        	return HelpWindows.create(); 
         	
     	case 1:
     		return null;
@@ -499,7 +526,7 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	if(OSMonitorService.getInstance() != null)
         		OSMonitorService.getInstance().stopSelf();
 
-        	JNILibrary.killSelf(this);
+        	CommonUtil.killSelf(this);
 
         	break;
         }
@@ -554,8 +581,8 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
     	}
 
     	selectedPosition = (int) ((AdapterContextMenuInfo)menuInfo).position;
-    	selectedPackageName = ProcessInfo.getPacakge(selectedPosition);
     	selectedPackagePID = JNILibrary.GetProcessPID(selectedPosition);
+    	selectedPackageName = ProcessInfo.getPacakge(selectedPackagePID);
  
     	if(shortTOlong)
     	{
@@ -583,11 +610,15 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
     	if(useMenu)
       	{
-       		menu.setHeaderTitle(ProcessInfo.getPackageName(selectedPosition));
-       		menu.add(0, 1, 0, getResources().getString(R.string.killdialog_text));
-       		menu.add(0, 2, 0, getResources().getString(R.string.switchdialog_text));
-       		menu.add(0, 3, 0, getResources().getString(R.string.watchlog_text));
-       		menu.add(0, 4, 0, getResources().getString(R.string.btncancel_title));
+       		menu.setHeaderTitle(ProcessInfo.getPackageName(selectedPackagePID));
+       		menu.add(0, 1, 0, getResources().getString(R.string.process_kill));
+       		menu.add(0, 2, 0, getResources().getString(R.string.process_switch));
+       		menu.add(0, 3, 0, getResources().getString(R.string.process_watchlog));
+       		
+       		if(Rooted)
+       			menu.add(0, 4, 0, getResources().getString(R.string.process_nice));
+       		
+       		menu.add(0, 5, 0, getResources().getString(R.string.button_cancel));
     	}
     	else
     	{
@@ -604,14 +635,14 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         switch(item.getItemId()) 
    	    {
    	    case 1:
-
+   	    	ActivityManager ActivityMan = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
    	    	if(Rooted)
    	        {
-   	    		JNILibrary.execCommand("kill -9 "+JNILibrary.GetProcessPID(selectedPosition)+"\n");
+   	    		CommonUtil.execCommand("kill -9 "+selectedPackagePID+"\n");
    	        }
    	        else
    	        {
-   	        	android.os.Process.killProcess(JNILibrary.GetProcessPID(selectedPosition));
+   	        	android.os.Process.killProcess(selectedPackagePID);
    	        	ActivityMan.restartPackage(selectedPackageName);
    	        }
    	        
@@ -664,6 +695,28 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
    	    	WatchLog.putExtra("targetPID", selectedPackagePID);
    	    	startActivity(WatchLog);
    	    	return true;
+   	    	
+   	    case 4:
+   	    	CharSequence[] NiceValue = {"-20", "-19", "-18", "-17", "-16", "-15", "-14", "-13", "-12", "-11",
+   	    								"-10", "-9", "-8", "-7", "-6", "-5", "-4", "-3", "-2", "-1",
+   	    								"0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
+   	    								"10", "11", "12", "13", "14", "15", "16", "17", "18", "19"};
+
+   	    	AlertDialog.Builder builder = new AlertDialog.Builder(ProcessList.this);
+   	    	builder.setTitle(ProcessList.this.getResources().getString(R.string.process_nice));
+
+   	    	builder.setSingleChoiceItems(NiceValue, (int) (JNILibrary.GetProcessNice(selectedPackagePID)+20),
+   	    			new DialogInterface.OnClickListener(){
+
+   	    		@Override
+   	    		public void onClick(DialogInterface dialog, int which) {
+   	    			CommonUtil.execCommand(CommonUtil.NiceCMD+" "+selectedPackagePID+" "+(which-20));
+   	    			dialog.dismiss();
+   	    		}
+
+   	    	});
+   	    	builder.show();   	    	
+   	    	return true;
    	    }
    	    return super.onContextItemSelected(item);
  	}    
@@ -712,21 +765,15 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
     		{
     			shortTOlong = true;
     			GestureLong = true;
-    			v.performLongClick();
+    			if(v != null)
+    				v.performLongClick();
     		}
     }
     
     private class ProcessListAdapter extends BaseAdapter {
     	
-    	private ProcessInfoQuery ProcessInfo = null;
     	public int OrderBy = JNILibrary.doSortPID;
     	
-        public ProcessListAdapter(Context context)
-        {
-            ProcessInfo = ProcessInfoQuery.getInstance(context);
-            mContext = context;
-        }
-
         public int getCount() {
             return JNILibrary.GetProcessCounts();
         }
@@ -740,9 +787,10 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         }
  
         public View getView(int position, View convertView, ViewGroup parent) {
+
+        	int ProcessID = JNILibrary.GetProcessPID(position);
         	
             ProcessDetailView sv = null;
-
             ProcessInfo.doCacheInfo(position);
 
         	String OrderValue = "";
@@ -752,73 +800,65 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	case 1:
         	case 2:
         	case 5:
-        		OrderValue = ProcessInfo.getProcessLoad(position);
+        		OrderValue = JNILibrary.GetProcessLoad(ProcessID)+"%";
         		break;
         	case 3:
-        		OrderValue = ProcessInfo.getProcessMem(position);
+        		if(JNILibrary.GetProcessRSS(ProcessID) > 1024) 
+        			OrderValue = (JNILibrary.GetProcessRSS(ProcessID)/1024)+"M";
+        		else
+        			OrderValue = JNILibrary.GetProcessRSS(ProcessID)+"K";
         		break;
         	case 4:
-        		OrderValue = ProcessInfo.getProcessThreads(position);
+        		OrderValue = JNILibrary.GetProcessThreads(ProcessID)+"";
         		break;
         	}
         	
     		Drawable DetailIcon = null;
-    		if(!ProcessInfo.getExpaned(position))
-        		DetailIcon = mContext.getResources().getDrawable(R.drawable.dshow);
+    		if(!ProcessInfo.getExpaned(ProcessID))
+        		DetailIcon = getApplication().getResources().getDrawable(R.drawable.dshow);
     		else
-    			DetailIcon = mContext.getResources().getDrawable(R.drawable.dclose);
+    			DetailIcon = getApplication().getResources().getDrawable(R.drawable.dclose);
 
     		
-    		if (convertView == null && mBusy == true)
-    		{
-    			sv = new ProcessDetailView(mContext, ProcessInfo.getProcessPID(position),
-    										ProcessInfo.getExpaned(position), position);
-    		}
-    		else if (convertView == null && mBusy == false) {
-                sv = new ProcessDetailView(mContext, ProcessInfo.getAppIcon(position),
-                							ProcessInfo.getProcessPID(position),
-                							ProcessInfo.getPackageName(position),
+    		if (convertView == null) {
+                sv = new ProcessDetailView(getApplication(), ProcessInfo.getAppIcon(ProcessID),
+                							ProcessID,
+                							ProcessInfo.getPackageName(ProcessID),
                 							OrderValue,
-        	        						ProcessInfo.getAppInfo(position), 
-        	        						ProcessInfo.getExpaned(position),
-	               							position,
+        	        						ProcessInfo.getAppInfo(ProcessID), 
+        	        						ProcessInfo.getExpaned(ProcessID),
+        	        						position,
 	               							DetailIcon);
             } 
-            else if (mBusy == true)
-            {
-                sv = (ProcessDetailView)convertView;
-            	sv.setView(ProcessInfo.getProcessPID(position), position);
-                
-                sv.setContext("");
-                sv.setExpanded(ProcessInfo.getExpaned(position));
-                sv.setMultiSelected(ProcessInfo.getSelected(position));
-            }
             else
             {
                 sv = (ProcessDetailView)convertView;
-               	sv.setView( ProcessInfo.getAppIcon(position), 
-               				 ProcessInfo.getProcessPID(position),
-               				 ProcessInfo.getPackageName(position),
-               				 OrderValue,
-               				 position,
-               				 DetailIcon);
+               	sv.setView( ProcessInfo.getAppIcon(ProcessID), 
+               				ProcessID,
+               				ProcessInfo.getPackageName(ProcessID),
+               				OrderValue,
+               				position,
+               				DetailIcon);
                 
-                sv.setContext(ProcessInfo.getAppInfo(position));
-                sv.setExpanded(ProcessInfo.getExpaned(position));
-                sv.setMultiSelected(ProcessInfo.getSelected(position));
+               	if(ProcessInfo.getExpaned(ProcessID))
+               		sv.setContext(ProcessInfo.getAppInfo(ProcessID));
+               	
+                sv.setExpanded(ProcessInfo.getExpaned(ProcessID));
+                sv.setMultiSelected(ProcessInfo.getSelected(ProcessID));
         	}
             
            	return sv;
         }
-
+        
         public boolean toggle(ProcessDetailView v, int position, boolean split, boolean multi) {
+    		int ProcessID = JNILibrary.GetProcessPID(position);
 
     		if(multi)
     		{
-    			if(ProcessInfo.getSelected(position))
-    				ProcessInfo.setSelected(position, false);
+    			if(ProcessInfo.getSelected(ProcessID))
+    				ProcessInfo.setSelected(ProcessID, false);
     			else
-    				ProcessInfo.setSelected(position, true);
+    				ProcessInfo.setSelected(ProcessID, true);
     			
             	notifyDataSetChanged();
             	
@@ -831,18 +871,16 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         	}
         	else
         	{
-            	if(ProcessInfo.getExpaned(position))
-            		ProcessInfo.setExpaned(position, false);
+            	if(ProcessInfo.getExpaned(ProcessID))
+            		ProcessInfo.setExpaned(ProcessID, false);
             	else
-            		ProcessInfo.setExpaned(position, true);
+            		ProcessInfo.setExpaned(ProcessID, true);
         	}
 
         	notifyDataSetChanged();
         	
         	return true;
         }
-        
-        private Context mContext;
     }
     
     private class ProcessDetailView extends TableLayout {
@@ -856,14 +894,12 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
     	private TextView AppInfoField;
     	
     	private boolean Expanded = false;
-
+    	
         public ProcessDetailView(Context context, Drawable Icon, int PID, String Name,
         						 String Value, String AppInfo, boolean expanded, int position,
         						 Drawable DetailIcon) {
             super(context);
             this.setColumnStretchable(2, true);
-            
-            //this.setOrientation(VERTICAL);
             
             PIDField = new TextView(context);
             IconField = new ImageView(context);  
@@ -876,7 +912,6 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
             DetailField.setImageDrawable(DetailIcon);
             DetailField.setPadding(3, 3, 3, 3);
             
-
             PIDField.setText(""+PID);
 
            	IconField.setImageDrawable(Icon);
@@ -887,22 +922,23 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
             PIDField.setGravity(Gravity.LEFT);
             PIDField.setPadding(3, 3, 3, 3);
-            if(CompareFunc.getScreenSize() == 2)
+            if(CommonUtil.getScreenSize() == 2)
             	PIDField.setWidth(90);
-            else if(CompareFunc.getScreenSize() == 0)
+            else if(CommonUtil.getScreenSize() == 0)
             	PIDField.setWidth(35);
             else
             	PIDField.setWidth(55);
 
             NameField.setPadding(3, 3, 3, 3);
             NameField.setGravity(Gravity.LEFT);
-            NameField.setWidth(getWidth()- IconField.getWidth() - DetailField.getWidth() - 115);
+            NameField.setWidth(getWidth()- IconField.getWidth()
+            						- DetailField.getWidth() - 115);
 
             ValueField.setPadding(3, 3, 8, 3);
 
-            if(CompareFunc.getScreenSize() == 2)
+            if(CommonUtil.getScreenSize() == 2)
             	ValueField.setWidth(80);
-            else if (CompareFunc.getScreenSize() == 0)
+            else if (CommonUtil.getScreenSize() == 0)
             	ValueField.setWidth(35);
             else
             	ValueField.setWidth(50);
@@ -917,6 +953,8 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 
 	     	AppInfoField.setText(AppInfo);
             addView(AppInfoField);
+            AppInfoField.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT
+            	     									, LayoutParams.MATCH_PARENT) );
 	     	AppInfoField.setVisibility(expanded ? VISIBLE : GONE);
 	     	
 	     	if(position % 2 == 0)
@@ -925,77 +963,13 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 	     		setBackgroundColor(0x80000000);
 
         }
-        
-        public ProcessDetailView(Context context, int PID, boolean expanded,int position) {
-        	
-        	super(context);
-        	this.setColumnStretchable(2, true);
-
-        	PIDField = new TextView(context);
-        	IconField = new ImageView(context);  
-        	NameField = new TextView(context);
-
-        	ValueField = new TextView(context);
-        	AppInfoField = new TextView(context);
-        	DetailField = new ImageView(context);
-
-        	DetailField.setImageDrawable(null);
-            DetailField.setPadding(3, 3, 3, 3);
-            
-           	IconField.setImageDrawable(null);
-        	IconField.setPadding(8, 3, 3, 3);
-
-			PIDField.setText(""+PID);
-        	PIDField.setGravity(Gravity.LEFT);
-        	PIDField.setPadding(3, 3, 3, 3);
-
-        	if(CompareFunc.getScreenSize() == 2)
-        		PIDField.setWidth(90);
-        	else if(CompareFunc.getScreenSize() == 0)
-        		PIDField.setWidth(35);
-        	else
-        		PIDField.setWidth(55);
-
-        	NameField.setPadding(3, 3, 3, 3);
-        	NameField.setGravity(Gravity.LEFT);
-        	NameField.setWidth(getWidth()- IconField.getWidth() - DetailField.getWidth() - 115);
-
-        	ValueField.setPadding(3, 3, 8, 3);
-
-        	if(CompareFunc.getScreenSize() == 2)
-        		ValueField.setWidth(80);
-        	else if (CompareFunc.getScreenSize() == 0)
-        		ValueField.setWidth(35);
-        	else
-        		ValueField.setWidth(50);
-
-        	NameField.setText("Loading");
-        	
-        	TitleRow = new TableRow(context);
-        	TitleRow.addView(PIDField);
-        	TitleRow.addView(IconField);
-        	TitleRow.addView(NameField);
-        	TitleRow.addView(ValueField);
-        	TitleRow.addView(DetailField);
-        	addView(TitleRow);
-
-        	addView(AppInfoField);
-        	AppInfoField.setVisibility(expanded ? VISIBLE : GONE);
-
-        	if(position % 2 == 0)
-        		setBackgroundColor(0x80444444);
-        	else
-        		setBackgroundColor(0x80000000);
-
-        }
-
-
+ 
         public void setContext(String AppInfo) {
        		AppInfoField.setText(AppInfo);
 		}
 
-		public void setView( Drawable Icon, int PID, String Name, String Value, int position,
-							  Drawable DetailIcon) {
+		public void setView( Drawable Icon, int PID, String Name, 
+							String Value, int position, Drawable DetailIcon) {
 
 			IconField.setImageDrawable(Icon);
 			DetailField.setImageDrawable(DetailIcon);
@@ -1008,22 +982,6 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
 			else
 				setBackgroundColor(0x80000000);
     	}
-		
-		public void setView(int PID, int position) {
-
-			IconField.setImageDrawable(null);
-			DetailField.setImageDrawable(null);
-//			IconField.setVisibility(View.GONE);
-//			DetailField.setVisibility(View.INVISIBLE);
-			PIDField.setText(""+PID);
-			NameField.setText("Loading");
-			ValueField.setText("");
-			
-			if(position % 2 == 0)
-				setBackgroundColor(0x80444444);
-			else
-				setBackgroundColor(0x80000000);
-		}
 
         /**
          * Convenience method to expand or hide the dialogue
@@ -1058,37 +1016,5 @@ public class ProcessList extends ListActivity implements OnGestureListener, OnTo
         }
         
     }
-
-	@Override
-	public void onScroll(AbsListView view, int firstVisibleItem,
-			int visibleItemCount, int totalItemCount) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onScrollStateChanged(AbsListView view, int scrollState) {
-		// TODO Auto-generated method stub
-		switch (scrollState) {
-			case OnScrollListener.SCROLL_STATE_IDLE:
-	            mBusy = false;
-
-	            if(SlowAdapter)
-				{
-		            int count = view.getChildCount();
-		            for (int i=0; i<count; i++) {
-		            	view.getChildAt(i).refreshDrawableState();
-		            }
-				}
-	            break;
-	        case OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
-	        case OnScrollListener.SCROLL_STATE_FLING:
-	        	if(SlowAdapter)
-	        		mBusy = true;
-	        	else
-	        		mBusy = false;
-	            break;
-        }
-	}
 
 }

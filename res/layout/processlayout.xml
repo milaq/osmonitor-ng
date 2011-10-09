@@ -15,7 +15,8 @@
             <TextView android:layout_width="wrap_content" 
 					  android:layout_height="wrap_content"
 					  android:gravity="left"
-            		  android:padding="3dip" android:text="@string/process_text"/>
+            		  android:padding="3dip" 
+            		  android:text="@string/process_count"/>
 
             <TextView android:id="@+id/RunProcessText"
                       android:layout_column="2"
@@ -34,14 +35,16 @@
 					  android:layout_width="wrap_content" 
 					  android:layout_height="wrap_content"
 					  android:gravity="right"
-					  android:padding="3dip" android:text="@string/cpu_text"/>
+					  android:padding="3dip" 
+					  android:text="@string/process_cpuusage"/>
 
 			<TextView android:text="" 
 					  android:id="@+id/CPUUsage" 
 					  android:layout_width="wrap_content" 
 					  android:layout_height="wrap_content"
 					  android:gravity="right"
-					  android:padding="3dip" android:width="50sp"/>
+					  android:padding="3dip" 
+					  android:width="50sp"/>
 		
 		</TableRow>
 	</TableLayout>
@@ -58,14 +61,14 @@
 					  android:gravity="left"
 					  android:paddingRight="3dip" 					   
 					  android:width="60sp" 
-					  android:text="@string/pid_text"
+					  android:text="@string/process_pid"
 					  android:textColor="@color/processlist_text"
 					  android:textStyle="bold"/>
 
 			<TextView android:gravity="left"
             		  android:layout_column="2"
 					  android:paddingLeft="3dip"
-					  android:text="@string/name_text" 
+					  android:text="@string/process_name" 
 					  android:textColor="@color/processlist_text" 
 					  android:textStyle="bold"/>
 
@@ -103,7 +106,8 @@
         <!-- Here is the view to show if the list is emtpy -->
         <TextView android:id="@+id/empty"
             android:layout_width="fill_parent" 
-            android:layout_height="fill_parent" android:text="@string/loading_text"/>
+            android:layout_height="fill_parent"
+            android:text="@string/message_loading"/>
             
     </FrameLayout>
 
@@ -114,13 +118,15 @@
         android:stretchColumns="5">
         
         <TableRow>
-            <TextView android:padding="3dip" android:text="@string/memorytotal_text"/>
+            <TextView android:padding="3dip" 
+            		  android:text="@string/process_memorytotal"/>
 
             <TextView android:id="@+id/MemTotalText"
             		  android:text="0K"
             		  android:padding="3dip" />
 
-            <TextView android:padding="3dip" android:text="@string/memoryfree_text"/>
+            <TextView android:padding="3dip" 
+            		  android:text="@string/process_memoryfree"/>
 
             <TextView android:id="@+id/MemFreeText"
             		  android:text="0K"
@@ -143,13 +149,13 @@
         <TableRow>
      		<CheckBox android:enabled="true"
      		        android:id="@+id/Freeze"
-     		        android:text="@string/freeze_text"/>
+     		        android:text="@string/process_freeze"/>
      		<CheckBox android:id="@+id/MultiSelect"
-            		  android:text="@string/multiselect_text"/>
+            		  android:text="@string/process_multiselect"/>
      		<Button style="?android:attr/buttonStyleSmall" 
      		        android:enabled="false"
      		        android:id="@+id/MultiKill"
-     		        android:text="@string/multikill_text"/>
+     		        android:text="@string/process_multikill"/>
         </TableRow>
  
 	</TableLayout>

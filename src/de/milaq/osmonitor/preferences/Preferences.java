@@ -16,7 +16,7 @@
 
 package de.milaq.osmonitor.preferences;
 
-import de.milaq.osmonitor.CompareFunc;
+import de.milaq.osmonitor.CommonUtil;
 import de.milaq.osmonitor.JNIInterface;
 import de.milaq.osmonitor.R;
 
@@ -81,7 +81,7 @@ public class Preferences extends PreferenceActivity {
         Preference AutoStart = (Preference)findPreference(PREF_AUTOSTART);
     	Preference Rooted = (Preference)findPreference(PREF_ROOTED);
         
-       	if(CompareFunc.checkExtraStore(this))
+       	if(CommonUtil.checkExtraStore(this))
    			AutoStart.setEnabled(false);
         
     	// check rooted
@@ -111,9 +111,14 @@ public class Preferences extends PreferenceActivity {
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue)
 			{
+				if(newValue.equals(true))
+					CommonUtil.CheckNice(getAssets());
+
 				if(Settings.getBoolean(PREF_AUTOSTART, false) == true &&
 						newValue.equals(true))
+				{
 					PrefSelf.findPreference(PREF_AUTOSETCPU).setEnabled(true);
+				}
 				else
 					PrefSelf.findPreference(PREF_AUTOSETCPU).setEnabled(false);
 				

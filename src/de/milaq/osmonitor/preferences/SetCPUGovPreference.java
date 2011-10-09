@@ -25,6 +25,7 @@ public class SetCPUGovPreference extends DialogPreference {
 			return new View(this.getContext());
 
 		this.GovSpinner = new Spinner(this.getContext());
+
 		ArrayAdapter<String> GovAdapter = new ArrayAdapter<String>(this.getContext(), android.R.layout.simple_spinner_item,
 													GetCPUGovList());
 	    GovAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -34,7 +35,7 @@ public class SetCPUGovPreference extends DialogPreference {
 	    {
 		    for (int CurGov = 0; CurGov < GovAdapter.getCount(); CurGov++)
 		    {
-		    	if(GovAdapter.getItem(CurGov).trim().equals(JNILibrary.GetProcessorScalGov().trim()))
+		    	if(GovAdapter.getItem(CurGov).trim().equals(JNILibrary.GetProcessorScalGov(0).trim()))
 		    			GovSpinner.setSelection(CurGov);		
 		    }
 	    }
@@ -80,7 +81,8 @@ public class SetCPUGovPreference extends DialogPreference {
 	@Override
 	protected void onDialogClosed(boolean positiveResult) {
 		if(positiveResult){
-			persistString(GovSpinner.getSelectedItem().toString());
+			if(GovSpinner != null)
+				persistString(GovSpinner.getSelectedItem().toString());
 		}
 		super.onDialogClosed(positiveResult);
 	}

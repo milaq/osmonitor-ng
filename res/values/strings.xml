@@ -1,118 +1,247 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+<!-- Application -->
 <string name="app_name">OS Monitor</string>
-<string name="app_name_long">OS Monitor NG</string>
-<string name="app_title">Android OS Monitor NG 1.3</string>
-<string name="bar_title">Android OS Monitor NG</string>
-<string name="notify_text">Running in background</string>
+<string name="app_title">OS Monitor 2.0-ng</string>
+
+<!-- StatusBar -->
+<string name="bar_title">OS Monitor</string>
+<string name="bar_text">Running in background</string>
+
+<!-- Tab -->
 <string name="process_tab">Processes</string>
 <string name="network_tab">Network</string>
 <string name="connection_tab">Connections</string>
 <string name="misc_tab">Misc</string>
 <string name="debug_tab">Messages</string>
-<string name="process_text">Process count:</string>
-<string name="cpu_text">CPU usage:</string>
-<string name="memorytotal_text">Memory total:</string>
-<string name="memoryfree_text">Free:</string>
-<string name="pid_text">PID</string>
-<string name="name_text">Process name</string>
-<string name="load_text">Load</string>
-<string name="mem_text">Mem</string>
-<string name="thread_text">THS</string>
-<string name="loading_text">Loading...</string>
-<string name="options_text">Options</string>
-<string name="algorithm_text">Sorting algorithm</string>
-<string name="sortbytitle_text">Sort by</string>
-<string name="sortbytitlesum_text">PID, Load, Memory, Threads, Name</string>
-<string name="longclicktitle_text">Long click behavior</string>
-<string name="shortclicktitle_text">Short click behavior</string>
-<string name="clicktitlesum_text">Customize the click behavior</string>
-<string name="sortway_text">Reverse sort order</string>
-<string name="sortwaysum_text">Sort the list in ascending instead of descending order</string>
-<string name="slowadapter_text">Enable slow adapter</string>
-<string name="showsystem_text">Hide system processes</string>
-<string name="showsystemsum_text">Hide any process that contains "/system/" or UID equal to 0 (root)</string>
-<string name="rooted_text">Root mode</string>
-<string name="rootedsum_text">Support for killing system processes and setting CPU frequency (needs root permissions)</string>
-<string name="interface_text">Interface</string>
-<string name="ip_text">IPv4</string>
-<string name="ip6_text">IPv6</string>
-<string name="mac_text">MAC</string>
-<string name="rx_text">Rx</string>
-<string name="tx_text">Tx</string>
-<string name="status_text">Status</string>
-<string name="protocol_text">Prtcl</string>
-<string name="localremote_text">Local / Remote IP</string>
-<string name="batteryjni_text">Get status via file</string>
-<string name="batteryjnisum_text">Gather status from /sys/class/power_supply/battery/*</string>
-<string name="autosetcpu_text">Set CPU on boot</string>
-<string name="processorfreq_text">Frequency range</string>
-<string name="processorscal_text">Scaling range</string>
+<string name="aboutoption_text">About</string>
+
+<!-- Process Tab Start -->
+ 
+<!-- Header -->
+<string name="process_count">Process count:</string>
+<string name="process_cpuusage">CPU usage:</string>
+
+<!-- Footer -->
+<string name="process_memorytotal">Memory - Total:</string>
+<string name="process_memoryfree">Free:</string>
+
+<!-- Table Header -->
+<string name="process_pid">PID</string>
+<string name="process_name">Process Name</string>
+<string name="process_load">Load</string>
+<string name="process_mem">Mem</string>
+<string name="process_thread">THS</string>
+
+<!-- Action Menu -->
+<string name="process_kill">Kill Process</string>
+<string name="process_switch">Switch to Process</string>
+<string name="process_watchlog">Watch Log</string>
+<string name="process_nice">Nice Process</string>
+
+<!-- Expanded Menu  -->
+<string name="process_killmsg">Kill $COUNT$ Process..</string>
+<string name="process_multiselect">MultiSelect</string>
+<string name="process_multikill">Kill</string>
+<string name="process_freeze">Freeze</string>
+
+<!-- Process Detail -->
+<string name="process_detail_process">Process</string>
+<string name="process_detail_memory">Memory</string>
+<string name="process_detail_thread">Thread</string>
+<string name="process_detail_load">Load</string>
+<string name="process_detail_stime">STime</string>
+<string name="process_detail_utime">UTime</string>
+<string name="process_detail_nice">Nice</string>
+<string name="process_detail_user">User</string>
+<string name="process_detail_status">Status</string>
+<string name="process_detail_time">Start Time</string>
+
+<!-- Process Status -->
+<string name="process_status_zombie">Zombie</string>
+<string name="process_status_sleep">Sleep</string>
+<string name="process_status_running">Running</string>
+<string name="process_status_waitio">Wait IO</string>
+<string name="process_status_stop">Stop</string>
+<string name="process_status_unknown">Unknown</string>
+
+<!-- Process Tab End -->
+
+
+<!-- Network Tab Start -->
+
+<!-- Header -->
+<string name="network_interface">Interface</string>
+<string name="network_ip">IPv4</string>
+<string name="network_ip6">IPv6</string>
+
+<!-- Additional -->
+<string name="network_mac">MAC</string>
+<string name="network_rx">Rx</string>
+<string name="network_tx">Tx</string>
+<string name="network_status">Status</string>
+
+<!-- Status -->
+<string name="network_status_up">up</string>
+<string name="network_status_down">down</string>
+<string name="network_status_broadcast">broadcast</string>
+<string name="network_status_loopback">loopback</string>
+<string name="network_status_p2p">point-to-point</string>
+<string name="network_status_running">running</string>
+<string name="network_status_multicast">multicast</string>
+
+<!-- Network Tab End -->
+
+<!-- Connection Tab Start -->
+
+<!-- Header -->
+<string name="connection_protocol_text">Prtcl</string>
+<string name="connection_localremote_text">Local / Remote IP</string>
+<string name="connection_status_text">Status</string>
+
+<!-- Connection Tab End -->
+
+<!-- Misc Tab Start -->
+
+<!-- Uptime -->
+<string name="uptimeday_text">days</string>
+<string name="uptime_text">Uptime</string>
+
+<!-- CPU -->
+<string name="processorfreq_text">Frequency Range</string>
+<string name="processorscal_text">Scaling Range</string>
 <string name="processorgov_text">Governor</string>
 <string name="processortmp_text">Temperature</string>
 <string name="processorcur_text">Current</string>
-<string name="health_text">Health</string>
-<string name="technology_text">Technology</string>
-<string name="capacity_text">Capacity</string>
-<string name="voltage_text">Voltage</string>
-<string name="temperature_text">Temperature</string>
-<string name="acpower_text">AC Power</string>
-<string name="usbpower_text">USB Power</string>
-<string name="online_text">OnLine</string>
-<string name="offline_text">OffLine</string>
-<string name="disktotal_text">Total</string>
-<string name="diskused_text">used</string>
-<string name="diskavailable_text">Available</string>
-<string name="whoisdialog_title">Whois search</string>
-<string name="whoisdialogsum_title">Query Whois information when clicking on a connection</string>
-<string name="ip6to4_title">IPv6 to IPv4</string>
-<string name="ip6to4sum_title">Force convert IPv6 to IPv4 (2.x)</string>
-<string name="rdns_title">Lookup DNS</string>
-<string name="rdnssum_title">Convert IP to DNS record</string>
-<string name="waitdialog_title">Load</string>
-<string name="waitdialog_text">Please wait...</string>
-<string name="killdialog_title">Menu</string>
-<string name="killdialog_text">Kill process</string>
-<string name="switchdialog_text">Switch to process</string>
-<string name="watchlog_text">Watch log</string>
-<string name="choicelogtype_text">View log</string>
-<string name="choicelogtypesum_text">dmesg or logcat</string>
-<string name="dmesgfilter_text">Filter (dmesg)</string>
-<string name="logcatfilter_text">Filter (logcat)</string>
-<string name="logcatsource_text">Ring buffer</string>
-<string name="filterenable_text">Enable filtering</string>
-<string name="filterstr_text">Tag filter</string>
-<string name="filterpid_text">PID filter</string>
-<string name="filterlevel_text">Loglevel filter</string>
+<string name="processorcore_text">Core</string>
+
+<!-- Battery -->
+<string name="battery_text">Battery</string>
+<string name="battery_health_text">Health</string>
+<string name="battery_technology_text">Technology</string>
+<string name="battery_capacity_text">Capacity</string>
+<string name="battery_voltage_text">Voltage</string>
+<string name="battery_temperature_text">Temperature</string>
+<string name="battery_acpower_text">AC Power</string>
+<string name="battery_usbpower_text">USB Power</string>
+<string name="battery_status_text">Status</string>
+<string name="battery_online_text">Online</string>
+<string name="battery_offline_text">Offline</string>
+<string name="battery_status_unknown_text">Unknown</string>
+<string name="battery_status_charging_text">Charging</string>
+<string name="battery_status_discharging_text">DisCharging</string>
+<string name="battery_status_notcharging_text">Not Charging</string>
+<string name="battery_status_full_text">Full</string>
+<string name="battery_health_dead_text">Dead</string>
+<string name="battery_health_good_text">Good</string>
+<string name="battery_health_overheat_text">Overheat</string>
+<string name="battery_health_overvoltage_text">Overvoltage</string>
+<string name="battery_health_unknown_text">Unknown</string>
+<string name="battery_health_failure_text">Unspecified Failure</string>
+
+
+<!-- Disk -->
+<string name="disk_total_text">Total</string>
+<string name="disk_used_text">Used</string>
+<string name="disk_available_text">Available</string>
+
+<!-- Misc Tab End -->
+
+
+<!-- Message Tab Start -->
+
+<!-- Header -->
+<string name="message_count_text">Message:</string>
+<string name="message_freeze_text">Freeze</string>
+
+<!-- Message Tab End -->
+
+
+<!-- Preferences -->
+
+<!-- Global -->
+<string name="pref_updatetime_title">Update interval (seconds)</string>
+<string name="pref_updatetimesum_title">General refresh interval</string>
+
+<!-- Status Bar  -->
+<string name="pref_showiconbar_title">Show notification icon</string>
+<string name="pref_iconbarcolor_title">Notification icon color</string>
+<string name="pref_showiconbarsum_title">Show a shortcut icon in notification area </string>
+<string name="pref_cpuusage_text">Show CPU Usage</string>
+<string name="pref_cpuusagesum_text">Show an animated CPU meter icon in the notification area</string>
+<string name="pref_tempvalue_text">Show Celsius</string>
+<string name="pref_tempvaluesum_text">Toggle Celsius/Fahrenheit units</string>
+<string name="pref_autostart_text">Autostart</string>
+<string name="pref_autostartsum_text">Autostart on bootup</string>
+
+<!-- Extra  -->
+<string name="pref_hideappbar_text">Hide application title</string>
+<string name="pref_hideappbarsum_text">More screen space to display app content</string>
+<string name="pref_rooted_text">Root mode</string>
+
+
+<!-- Process -->
+<string name="pref_showsystem_text">Hide system processes</string>
+<string name="pref_showsystemsum_text">Hide any process that contains "/system/" or UID equal to 0 (root)</string>
+<string name="pref_algorithm_text">Sorting algorithm</string>
+<string name="pref_sortbytitle_text">Sort by</string>
+<string name="pref_sortbytitlesum_text">PID, Load, Memory, Threads, Name</string>
+<string name="pref_sortway_text">Reverse sort order</string>
+<string name="pref_sortwaysum_text">Sort the list in descending instead of ascending order</string>
+<string name="pref_longclicktitle_text">Long click behavior</string>
+<string name="pref_shortclicktitle_text">Short click behavior</string>
+<string name="pref_clicktitlesum_text">Show Detail, Action Menu, Right Detail/Left Action</string>
+<string name="pref_rootedsum_text">Support for killing system processes and setting CPU frequency (needs root permissions)</string>
+<string name="pref_hidemultiselect_text">Hide extra area</string>
+<string name="pref_hidemultiselectsum_text">Hide multiselect and freeze options</string>
+
+<!-- Connection -->
+<string name="pref_whoisdialog_title">Whois Search</string>
+<string name="pref_whoisdialogsum_title">Query wWHOIS information when tapping on a connection</string>
+<string name="pref_ip6to4_title">IPv6 to IPv4</string>
+<string name="pref_ip6to4sum_title">Convert IPv6 to IPv4</string>
+<string name="pref_rdns_title">Lookup DNS</string>
+<string name="pref_rdnssum_title">Convert IP to registered domain name</string>
+
+<!-- Misc -->
+<string name="pref_autosetcpu_text">Set CPU on Boot</string>
+<string name="pref_batteryjni_text">Get Status via File</string>
+<string name="pref_batteryjnisum_text">Gather status from /sys/class/power_supply/battery/*</string>
+
+<!-- Message -->
 <string name="filter_text">Filter</string>
-<string name="updatetime_title">Update interval (seconds)</string>
-<string name="updatetimesum_title">General refresh interval</string>
-<string name="showiconbar_title">Show notification icon</string>
-<string name="iconbarcolor_title">Notification icon color</string>
-<string name="showiconbarsum_title">Show a shortcut icon in the notification area</string>
-<string name="cpuusage_text">Show CPU usage</string>
-<string name="cpuusagesum_text">Show an animated CPU meter icon in the notification area</string>
-<string name="tempvalue_text">Show Celsius</string>
-<string name="tempvaluesum_text">Toggle Celsius/Fahrenheit units</string>
-<string name="autostart_text">Autostart</string>
-<string name="autostartsum_text">Autostart on bootup</string>
-<string name="hideappbar_text">Hide application title</string>
-<string name="hideappbarsum_text">More screen space to display content</string>
-<string name="hidemultiselect_text">Hide extra area</string>
-<string name="hidemultiselectsum_text">Hide multiselect and freeze option</string>
-<string name="logexport_title">Export</string>
-<string name="exportfile_title">Choose a filename</string>
-<string name="exportexist_title">File already exist! Please choose another filename</string>
-<string name="btnok_title">OK</string>
-<string name="btncancel_title">Cancel</string>
-<string name="aboutoption_text">About</string>
-<string name="forceexit_text">Exit</string>
-<string name="messagecount_text"></string>
-<string name="multiselect_text">Multiselect</string>
-<string name="multikill_text">Kill</string>
-<string name="multireset_text">Reset</string>
+<string name="pref_choicelogtypesum_text">dmesg or logcat</string>
+<string name="pref_choicelogtype_text">View Log</string>
+<string name="pref_dmesgfilter_text">Filter (dmesg)</string>
+<string name="pref_logcatfilter_text">Filter (logcat)</string>
+<string name="pref_logcatsource_text">Ring Buffer</string>
+<string name="pref_filterenable_text">Enable Filtering</string>
+<string name="pref_filterstr_text">Tag Filter</string>
+<string name="pref_filterpid_text">PID Filter</string>
+<string name="pref_filterlevel_text">Filter Log</string>
 <string name="freeze_text">Freeze</string>
-<string name="about_text">Version: 1.3-ng\n\nby milaq\n\n\nOriginal OS Monitor by eolwral@gmail.com\n\nWhois API:\n http://en.utrace.de\n\n</string>
-<string name="aboutbtn_text">Close</string>
 <string name="switchlogs_text">Switch logtype</string>
+
+<!-- Common -->
+<string name="button_ok">OK</string>
+<string name="button_cancel">Cancel</string>
+<string name="button_close">Close</string>
+<string name="message_loading">Loading...</string>
+<string name="message_waiting">Please wait...</string>
+
+<!-- Export -->
+<string name="common_exportfile_title">Input file name</string>
+<string name="common_exportexist_title">File already exist! Please choose another filename.</string>
+<string name="common_exportdone_title">Export done.</string>
+
+<!-- Menu -->
+<string name="menu_options">Options</string>
+<string name="menu_help">Help</string>
+<string name="menu_forceexit">Exit</string>
+<string name="menu_logexport">Export</string>
+
+<!-- Help -->
+<string name="help_info">\nVersion: 2.0-ng\n\nby milaq\n\n\nOriginal OS Monitor by eolwral@gmail.com\n\n</string>
+
 </resources>

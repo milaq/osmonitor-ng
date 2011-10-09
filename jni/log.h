@@ -46,6 +46,7 @@ typedef struct dmesg_proto {
 int dmesg_list_count();
 void dmesg_list_add(dmesg_item *new_dmesg);
 void dmesg_list_empty();
+void dmesg_list_truncate();
 int dmesg_list_nextrecord();
 void dmesg_list_reset();
 int dmesg_list_setpositon(int position);
@@ -79,6 +80,7 @@ typedef struct logcat_proto {
 
 void logcat_list_add(logcat_info *new_logcat, char *msg);
 void logcat_list_empty();
+void logcat_list_truncate();
 int logcat_list_nextrecord();
 int logcat_list_count();
 void logcat_list_reset();

@@ -21,8 +21,6 @@ import java.text.DecimalFormat;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
-import android.app.TabActivity;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
@@ -30,15 +28,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.Html;
 import android.text.Spanned;
-import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.GestureDetector.OnGestureListener;
-import android.view.View.OnTouchListener;
+import android.webkit.WebView;
 import android.widget.AbsListView;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.ExpandableListView;
@@ -49,17 +44,17 @@ import de.milaq.osmonitor.preferences.Preferences;
 
 public class InterfaceList extends Activity
 {
-	private static InterfaceList Self = null;
-    private static ExpandableListView UpdateInterface = null;
-	private static JNIInterface JNILibrary = JNIInterface.getInstance();;
-
-	
+    private ExpandableListView UpdateInterface = null;
+	private JNIInterface JNILibrary = JNIInterface.getInstance();;
+		
 	// Refresh
 	private Runnable InterfcaeRunnable = new Runnable() {
 		public void run() {
 
-			if(JNILibrary.doDataLoad() == 1) 
-				Self.onRefresh();
+			if(JNILibrary.doDataLoad() == 1) {
+		    	JNILibrary.doDataSwap();
+		    	UpdateInterface.invalidateViews();
+			}
 			
 	        InterfaceHandler.postDelayed(this, 1000);
 		}
@@ -75,23 +70,16 @@ public class InterfaceList extends Activity
         setContentView(R.layout.interfacelayout);
 
         // Setup our adapter
-        Self = this;
         UpdateInterface = (ExpandableListView) findViewById(R.id.interfacelist);
-        UpdateInterface.setAdapter(new AllInterfaceList(this, getResources()));
+        UpdateInterface.setAdapter(new AllInterfaceList());
         
     }
     
-    public void onRefresh()
-    {
-    	JNILibrary.doDataSwap();
-    	UpdateInterface.invalidateViews();
-    }
-        
     public boolean onCreateOptionsMenu(Menu optionMenu) 
     {
      	super.onCreateOptionsMenu(optionMenu);
-     	optionMenu.add(0, 1, 0, getResources().getString(R.string.options_text));
-       	optionMenu.add(0, 5, 0, getResources().getString(R.string.forceexit_text));
+     	optionMenu.add(0, 1, 0, getResources().getString(R.string.menu_options));
+       	optionMenu.add(0, 5, 0, getResources().getString(R.string.menu_forceexit));
         
     	return true;
     }
@@ -102,14 +90,20 @@ public class InterfaceList extends Activity
     	switch (id)
     	{
     	case 0:
-        	return new AlertDialog.Builder(this)
-			   .setIcon(R.drawable.appicon)
-			   .setTitle(R.string.app_name)
-			   .setMessage(R.string.about_text)
-			   .setPositiveButton(R.string.aboutbtn_text,
+    		AlertDialog.Builder HelpWindows = new AlertDialog.Builder(this);
+    		HelpWindows.setTitle(R.string.app_name);
+			HelpWindows.setMessage(R.string.help_info);
+			HelpWindows.setPositiveButton(R.string.button_close,
 			   new DialogInterface.OnClickListener() {
-				   public void onClick(DialogInterface dialog, int whichButton) { } })
-			   .create();
+				   public void onClick(DialogInterface dialog, int whichButton) { }
+				}
+			);
+
+   	        WebView HelpView = new WebView(this);
+            HelpView.loadUrl("http://wiki.android-os-monitor.googlecode.com/hg/phonehelp.html?r=b1c196ee43855882e59ad5b015b953d62c95729d");
+            HelpWindows.setView(HelpView);
+
+        	return HelpWindows.create(); 
     	}
     	
     	return null;
@@ -130,7 +124,7 @@ public class InterfaceList extends Activity
         	if(OSMonitorService.getInstance() != null)
         		OSMonitorService.getInstance().stopSelf();
 
-        	JNILibrary.killSelf(this);
+        	CommonUtil.killSelf(this);
         	break;
 
         }
@@ -150,7 +144,6 @@ public class InterfaceList extends Activity
     @Override
     protected void onResume() 
     {
-    	JNILibrary.SetNetworkIP6To4(0);
     	JNILibrary.doTaskStart(JNILibrary.doTaskInterface);
     	InterfaceHandler.post(InterfcaeRunnable);
     	super.onResume();
@@ -158,25 +151,18 @@ public class InterfaceList extends Activity
     
     public class AllInterfaceList extends BaseExpandableListAdapter {
    	
-    	private Resources ResourceManager = null;
-        private Context mContext = null;
-
-    	public AllInterfaceList(Context context, Resources resource)
-        {
-            this.mContext = context;
-            this.ResourceManager = resource;
-        }
-        
         public Spanned getChild(int groupPosition, int childPosition) {
         	
         	DecimalFormat SpeedFormat = new DecimalFormat(",###");
         	
+        	Resources ResourceManager = getApplication().getResources();
+        	
         	StringBuilder m_strBuf = new StringBuilder();
         	m_strBuf.setLength(0);
         	
-        	m_strBuf.append(ResourceManager.getText(R.string.mac_text)+": ")
+        	m_strBuf.append(ResourceManager.getText(R.string.network_mac)+": ")
         			.append("<b>"+JNILibrary.GetInterfaceMac(groupPosition)+"</b><br />")
-        			.append(ResourceManager.getText(R.string.rx_text))
+        			.append(ResourceManager.getText(R.string.network_rx))
         			.append(": <font color=\"#808080\">");
         	
         	long RxSize = JNILibrary.GetInterfaceInSize(groupPosition);
@@ -190,7 +176,7 @@ public class InterfaceList extends Activity
         		m_strBuf.append(RxSize);
         	
         	m_strBuf.append("</font><br />")
-        			.append(ResourceManager.getText(R.string.tx_text))
+        			.append(ResourceManager.getText(R.string.network_tx))
         			.append(": <font color=\"#808080\">");
 
         	long TxSize = JNILibrary.GetInterfaceOutSize(groupPosition);
@@ -203,9 +189,19 @@ public class InterfaceList extends Activity
         	else 
         		m_strBuf.append(JNILibrary.GetInterfaceInSize(groupPosition));
         	
+        	String Flags = JNILibrary.GetInterfaceFlags(groupPosition);
+        	
+        	Flags = Flags.replace("$up$", ResourceManager.getText(R.string.network_status_up));
+        	Flags = Flags.replace("$down$", ResourceManager.getText(R.string.network_status_down));
+        	Flags = Flags.replace("$broadcast$", ResourceManager.getText(R.string.network_status_broadcast));
+        	Flags = Flags.replace("$loopback$", ResourceManager.getText(R.string.network_status_loopback));
+        	Flags = Flags.replace("$point-to-point$", ResourceManager.getText(R.string.network_status_p2p));
+        	Flags = Flags.replace("$running$", ResourceManager.getText(R.string.network_status_running));
+        	Flags = Flags.replace("$multicast$", ResourceManager.getText(R.string.network_status_multicast));
+        	
         	m_strBuf.append("</font><br/>")
-        			.append(ResourceManager.getText(R.string.status_text)+": ")
-        			.append(JNILibrary.GetInterfaceFlags(groupPosition))
+        			.append(ResourceManager.getText(R.string.network_status)+": ")
+        			.append(Flags)
         			.append("<br/>");
 			
 			return Html.fromHtml(m_strBuf.toString());
@@ -224,16 +220,16 @@ public class InterfaceList extends Activity
             AbsListView.LayoutParams lp = new AbsListView.LayoutParams(
                     ViewGroup.LayoutParams.FILL_PARENT, 80);
 
-            TextView textView = new TextView(mContext);
+            TextView textView = new TextView(getApplication());
             textView.setLayoutParams(lp);
             
             // Center the text vertically
             textView.setGravity(Gravity.CENTER_VERTICAL | Gravity.CENTER_HORIZONTAL | Gravity.LEFT);
 
             // Set the text starting position
-            if(CompareFunc.getScreenSize() == 2)
+            if(CommonUtil.getScreenSize() == 2)
             	textView.setPadding(60, 5, 0, 0);
-            else if( CompareFunc.getScreenSize() == 0)
+            else if( CommonUtil.getScreenSize() == 0)
             	textView.setPadding(20, 5, 0, 0);
             else 
             	textView.setPadding(36, 5, 0, 0);
@@ -246,9 +242,9 @@ public class InterfaceList extends Activity
             TextView textView = getGenericView();
             textView.setText(getChild(groupPosition, childPosition));
 
-            if(CompareFunc.getScreenSize() == 2)
+            if(CommonUtil.getScreenSize() == 2)
             	textView.setPadding(60, 5, 0, 0);
-            else if(CompareFunc.getScreenSize() == 0)
+            else if(CommonUtil.getScreenSize() == 0)
             	textView.setPadding(20, 5, 0 , 0);
             else
             	textView.setPadding(36, 5, 0, 0);
@@ -262,15 +258,17 @@ public class InterfaceList extends Activity
         }
 
         public Object getGroup(int groupPosition) {
-        	String Info = ResourceManager.getText(R.string.interface_text)+": "+
+        	Resources ResourceManager = getApplication().getResources();
+        	
+        	String Info = ResourceManager.getText(R.string.network_interface)+": "+
          			   JNILibrary.GetInterfaceName(groupPosition)+ "\n"+
-         			   ResourceManager.getText(R.string.ip_text)+": "+
+         			   ResourceManager.getText(R.string.network_ip)+": "+
          			   JNILibrary.GetInterfaceAddr(groupPosition)+"/"+
          			   JNILibrary.GetInterfaceNetMask(groupPosition) + " ";
      		if(!JNILibrary.GetInterfaceAddr6(groupPosition).equals(""))
      		{
      			Info += "\n"+
-     					ResourceManager.getText(R.string.ip6_text)+": "+
+     					ResourceManager.getText(R.string.network_ip6)+": "+
      					JNILibrary.GetInterfaceAddr6(groupPosition)+"/"+
      					JNILibrary.GetInterfaceNetMask6(groupPosition) + " ";
      		}

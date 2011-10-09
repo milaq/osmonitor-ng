@@ -864,12 +864,12 @@ void if_get_flags(int position, char *buf)
 
 	char *updown, *brdcst, *loopbk, *ppp, *running, *multi;
 
-	updown =  (cur_ifinfo->flags & IFF_UP)           ? "up" : "down";
-    brdcst =  (cur_ifinfo->flags & IFF_BROADCAST)    ? " broadcast" : "";
-    loopbk =  (cur_ifinfo->flags & IFF_LOOPBACK)     ? " loopback" : "";
-	ppp =     (cur_ifinfo->flags & IFF_POINTOPOINT)  ? " point-to-point" : "";
-	running = (cur_ifinfo->flags & IFF_RUNNING)      ? " running" : "";
-	multi =   (cur_ifinfo->flags & IFF_MULTICAST)    ? " multicast" : "";
+	updown =  (cur_ifinfo->flags & IFF_UP)           ? "$up$" : "$down$";
+    brdcst =  (cur_ifinfo->flags & IFF_BROADCAST)    ? " $broadcast$" : "";
+    loopbk =  (cur_ifinfo->flags & IFF_LOOPBACK)     ? " $loopback$" : "";
+	ppp =     (cur_ifinfo->flags & IFF_POINTOPOINT)  ? " $point-to-point$" : "";
+	running = (cur_ifinfo->flags & IFF_RUNNING)      ? " $running$" : "";
+	multi =   (cur_ifinfo->flags & IFF_MULTICAST)    ? " $multicast$" : "";
 
 	snprintf(buf, BUFFERSIZE, "%s%s%s%s%s%s", updown, brdcst, loopbk, ppp, running, multi);
 
